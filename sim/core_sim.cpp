@@ -8,7 +8,8 @@ unsigned int rom[0x4000] = {0};
 unsigned int ram[0x4000] = {0};
 
 int main(int argc, char const *argv[]) {
-    assert(argc == 2);
+    assert(argc == 2 || (argc == 3 && !strcmp(argv[2], "--trace")));
+    bool trace = (argc == 3);
 
     Verilated::traceEverOn(true);
 
@@ -19,9 +20,12 @@ int main(int argc, char const *argv[]) {
 
     Vcore *core = new Vcore;
 
-    VerilatedVcdC* tfp = new VerilatedVcdC;
-    core->trace(tfp, 99);
-    tfp->open("trace.vcd");
+    VerilatedVcdC* tfp;
+    if (trace) {
+        tfp = new VerilatedVcdC;
+        core->trace(tfp, 99);
+        tfp->open("trace.vcd");
+    }
 
     unsigned int rom_address = 0;
     unsigned int ram_address = 0;
@@ -96,11 +100,11 @@ int main(int argc, char const *argv[]) {
         // Toggle the clock
         core->clk = 1;
         core->eval();
-        tfp->dump(i*100);
+        if (trace) tfp->dump(i*100);
 
         core->clk = 0;
         core->eval();
-        tfp->dump(i*100+50);
+        if (trace) tfp->dump(i*100+50);
 
         if (core->illegal_op) {
             printf("ILLEGAL OP! %d\n", i);
@@ -116,8 +120,10 @@ int main(int argc, char const *argv[]) {
         printf("\n");
     }
 
-    tfp->close();
-    delete tfp;
+    if (trace) {
+        tfp->close();
+        delete tfp;
+    }
     delete core;
     return 0;
 }

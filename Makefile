@@ -21,9 +21,14 @@ CORE_TEST_ROM=image.rom
 
 all: $(CORE_TEST)
 
-run: $(CORE_TEST)
-	$(MAKE) -C $(ASM_DIR) $(CORE_TEST_ROM)
+run: $(CORE_TEST) $(ASM_DIR)/$(CORE_TEST_ROM)
 	$(CORE_TEST) $(ASM_DIR)/$(CORE_TEST_ROM)
+
+trace: $(CORE_TEST) $(ASM_DIR)/$(CORE_TEST_ROM)
+	$(CORE_TEST) $(ASM_DIR)/$(CORE_TEST_ROM) --trace
+
+$(ASM_DIR)/$(CORE_TEST_ROM):
+	$(MAKE) -C $(ASM_DIR) $(CORE_TEST_ROM)
 
 test: $(ALU_TEST)
 	$(ALU_TEST)
