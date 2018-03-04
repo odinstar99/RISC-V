@@ -16,6 +16,8 @@ LD_SCRIPT=linker.ld
 
 all: image.rom fib.rom
 
+.PRECIOUS: image.elf fib.elf
+
 %.o: %.c
 	$(GCC) $(GCC_OPT) -c $< -o $@
 
