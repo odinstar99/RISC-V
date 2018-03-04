@@ -27,7 +27,7 @@ SECTIONS
     } >RAM
 
     .sdata : {
-        PROVIDE (__gp = . + 0x800);
+        __global_pointer$ = . + 0x800;
         *(.sdata*)
     } >RAM
     __data_end = __data_start + SIZEOF(.data) + SIZEOF(.sdata);

@@ -10,6 +10,14 @@ _entry:
 
 .global start
 start:
+    /* Set up stack pointer and global pointer */
+.option push
+.option norelax
+1:  auipc   gp, %pcrel_hi(__global_pointer$)
+    addi    gp, gp, %pcrel_lo(1b)
+.option pop
+    la      sp, __stack_va
+
     /* Copy data sections from ROM into RAM */
     la      t0, __data_start
     la      t1, __data_end
@@ -32,13 +40,6 @@ clear_bss_loop:
     addi    t0, t0, 4
 clear_bss_loop_end:
     bltu    t0, t1, clear_bss_loop
-
-    /* Set up stack pointer and global pointer */
-.option push
-.option norelax
-    la      gp, __gp
-.option pop
-    la      sp, __stack_va
 
     /* Run the main function */
     jal     main
