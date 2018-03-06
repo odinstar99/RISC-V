@@ -9,6 +9,7 @@ module riscv (
     output [7:0] hex3,
     output [7:0] hex4,
     output [7:0] hex5,
+    input [9:0] switch,
     input uart_rx,
     output uart_tx
 );
@@ -69,6 +70,7 @@ memory memory0 (
 
     .led(led),
     .hex(hex),
+    .switch(switch),
 
     .imem_address(imem_address),
     .imem_enable(imem_enable),

@@ -30,6 +30,7 @@ static char *some_string = "Hello world!";
 
 #define LEDS ((volatile unsigned int *) 0x70000000)
 #define HEX ((volatile unsigned int *) 0x70000004)
+#define SWITCH ((volatile unsigned int *) 0x70000008)
 
 void main() {
     unsigned int n = 5;
@@ -59,8 +60,8 @@ void main() {
     *LEDS = 0;
     *HEX = 0;
     while (1) {
-        *LEDS += 1;
-        *HEX += 1;
+        *LEDS = *SWITCH;
+        *HEX += *SWITCH;
         for (int j = 0; j < 1000000; j++) asm volatile ("nop");
     }
 }

@@ -10,7 +10,8 @@ module mmio (
     output [31:0] q,
 
     output [9:0] led,
-    output [47:0] hex
+    output [47:0] hex,
+    input [9:0] switch
 );
 
 logic [13:0] internal_address;
@@ -28,6 +29,8 @@ allsegments allsegments0 (
     .segments(hex)
 );
 
+logic [9:0] switch_state;
+
 always_comb begin
     led = led_state;
     next_led_state = led_state;
@@ -37,6 +40,7 @@ always_comb begin
     case (internal_address)
         14'h0000: q = {22'b0, led_state};
         14'h0001: q = {8'b0, hex_state};
+        14'h0002: q = {22'b0, switch_state};
         default: q = 0;
     endcase
 
@@ -83,6 +87,7 @@ always_ff @(posedge clock) begin
         led_state <= next_led_state;
         hex_state <= next_hex_state;
     end
+    switch_state <= switch;
 end
 
 endmodule
