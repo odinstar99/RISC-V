@@ -8,6 +8,8 @@ module hazard (
     input should_branch,
     input control_t mem_control,
     input control_t wb_control,
+    input rom_wait,
+    input ram_wait,
     output hazard,
     output if_pc_write_enable,
     output ifid_instruction_write_enable,
@@ -23,6 +25,10 @@ always_comb begin
     pipe_enable = 1;
     forward_rs1 = DECODE;
     forward_rs2 = DECODE;
+
+    if (rom_wait || ram_wait) begin
+        pipe_enable = 0;
+    end
 
     // Forwarding logic
     if ((ex_control.wb_select == MEM && ex_control.write_reg && (ex_control.rd == rs1 || ex_control.rd == rs2) && ex_control.rd != 0) ||

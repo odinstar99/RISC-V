@@ -27,11 +27,8 @@ end
 
 always_ff @(posedge clk) begin
     if (!reset_n) begin
-        for (int i = 0; i < 32; i++) begin
-            regs[i] <= 32'h0;
-        end
-    end
-    else begin
+        // Do nothing
+    end else begin
         if (write_dest && address_dest != 0) begin
             regs[address_dest] <= data_dest;
         end

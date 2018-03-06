@@ -12,8 +12,10 @@ module decode (
 );
 
 always_comb begin
-    logic [6:0] opcode = instruction[6:0];
-    logic [2:0] funct3 = instruction[14:12];
+    logic [6:0] opcode;
+    logic [2:0] funct3;
+    opcode = instruction[6:0];
+    funct3 = instruction[14:12];
     // Basic register assignment
     rs1 = instruction[19:15];
     rs2 = instruction[24:20];
@@ -109,14 +111,17 @@ always_comb begin
                 3'b101: control.alu_op = GE;
                 3'b110: control.alu_op = LTU;
                 3'b111: control.alu_op = GEU;
-                default: illegal_op = 1;
+                default: begin
+                    illegal_op = 1;
+                    control.alu_op = ADD;
+                end
             endcase
         end
         7'b0000011: begin // LOAD
             control.write_reg = 1;
             control.wb_select = MEM;
             control.alu_op = ADD;
-            control.alu_select1 = REG2;
+            control.alu_select1 = REG1;
             control.alu_select2 = IMMEDIATE;
             control.branch_mode = NEVER;
             control.branch_target = PC_REL;
@@ -159,10 +164,12 @@ always_comb begin
                 3'b101: control.alu_op = (instruction[30]) ? SRA : SRL;
                 3'b110: control.alu_op = OR;
                 3'b111: control.alu_op = AND;
+                default: control.alu_op = ADD;
             endcase
         end
         default: begin // Unknown operation
             illegal_op = 1;
+            control = 0;
         end
     endcase
 end

@@ -1,7 +1,7 @@
 `ifndef TYPES_SV
 `define TYPES_SV
 
-typedef enum [3:0] {
+typedef enum {
     ADD,
     SUB,
     AND,
@@ -20,33 +20,33 @@ typedef enum [3:0] {
     PC4
 } alu_operation_t;
 
-typedef enum [0:0] {
+typedef enum {
     REG1,
     PC
 } alu_select1_t;
 
-typedef enum [0:0] {
+typedef enum {
     REG2,
     IMMEDIATE
 } alu_select2_t;
 
-typedef enum [1:0] {
+typedef enum {
     NEVER,
     CONDITIONAL,
     ALWAYS
 } branch_mode_t;
 
-typedef enum [0:0] {
+typedef enum {
     PC_REL,
     REG_REL
 } branch_target_t;
 
-typedef enum [0:0] {
+typedef enum {
     REG,
     MEM
 } writeback_t;
 
-typedef enum [1:0] {
+typedef enum {
     DECODE,
     EXECUTE,
     MEMORY,

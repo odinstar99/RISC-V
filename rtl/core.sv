@@ -8,6 +8,7 @@ module core (
     output [31:0] rom_address,
     output rom_enable,
     input [31:0] rom_data,
+    input rom_wait,
 
     output [31:0] ram_address,
     output ram_enable,
@@ -16,7 +17,8 @@ module core (
     output ram_write_enable,
     output [2:0] ram_write_mode,
     output ram_read_enable,
-    output [2:0] ram_read_mode
+    output [2:0] ram_read_mode,
+    input ram_wait
 );
 
 logic pipe_enable;
@@ -83,6 +85,8 @@ logic [31:0] id_rs2_forward_val;
 
 control_t id_control_prelim;
 control_t id_control;
+// WB Control is defined up here because it is used for writeback
+control_t wb_control;
 logic id_hazard;
 
 decode id_decode (
@@ -102,6 +106,8 @@ hazard id_hazard_unit (
     .should_branch(ex_should_branch),
     .mem_control(mem_control),
     .wb_control(wb_control),
+    .rom_wait(rom_wait),
+    .ram_wait(ram_wait),
     .hazard(id_hazard),
     .if_pc_write_enable(if_pc_write_enable),
     .ifid_instruction_write_enable(ifid_instruction_write_enable),
@@ -274,8 +280,6 @@ logic [31:0] wb_alu_result;
 logic [31:0] wb_read_data;
 logic [31:0] wb_read_data_extended;
 logic [31:0] wb_result;
-
-control_t wb_control;
 
 always_comb begin
     // Sign extend the read memory value
