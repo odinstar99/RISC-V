@@ -13,7 +13,7 @@ ALU_TEST_SRC=sim/alu_sim.cpp
 CORE_PREFIX=core
 CORE_VPREFIX=V$(CORE_PREFIX)
 CORE_TEST=$(OBJ_DIR)/$(CORE_VPREFIX)
-CORE_TEST_RTL=rtl/core.sv rtl/alu.sv rtl/decode.sv rtl/hazard.sv rtl/regfile.sv rtl/types.sv
+CORE_TEST_RTL=rtl/core/core.sv rtl/core/alu.sv rtl/core/decode.sv rtl/core/hazard.sv rtl/core/regfile.sv rtl/core/types.sv
 CORE_TEST_SRC=sim/core_sim.cpp
 CORE_TEST_ROM=image.rom
 
@@ -42,5 +42,5 @@ $(ALU_TEST): $(ALU_TEST_RTL) $(ALU_TEST_SRC)
 	$(MAKE) -j -C $(OBJ_DIR) -f $(ALU_VPREFIX).mk
 
 $(CORE_TEST): $(CORE_TEST_RTL) $(CORE_TEST_SRC)
-	$(VERILATOR) $(VERILATOR_FLAGS) -cc $(CORE_TEST_RTL) --exe $(CORE_TEST_SRC) -Irtl
+	$(VERILATOR) $(VERILATOR_FLAGS) -cc $(CORE_TEST_RTL) --exe $(CORE_TEST_SRC) -Irtl/core
 	$(MAKE) -j -C $(OBJ_DIR) -f $(CORE_VPREFIX).mk
