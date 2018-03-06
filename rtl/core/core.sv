@@ -5,20 +5,20 @@ module core (
     input reset_n,
     output illegal_op,
 
-    output [31:0] rom_address,
-    output rom_enable,
-    input [31:0] rom_data,
-    input rom_wait,
+    output [31:0] imem_address,
+    output imem_enable,
+    input [31:0] imem_data,
+    input imem_wait,
 
-    output [31:0] ram_address,
-    output ram_enable,
-    output [31:0] ram_write_data,
-    input [31:0] ram_read_data,
-    output ram_write_enable,
-    output [2:0] ram_write_mode,
-    output ram_read_enable,
-    output [2:0] ram_read_mode,
-    input ram_wait
+    output [31:0] dmem_address,
+    output dmem_enable,
+    output [31:0] dmem_write_data,
+    input [31:0] dmem_read_data,
+    output dmem_write_enable,
+    output [2:0] dmem_write_mode,
+    output dmem_read_enable,
+    output [2:0] dmem_read_mode,
+    input dmem_wait
 );
 
 logic pipe_enable;
@@ -47,8 +47,8 @@ always_comb begin
     end
 
     // The requested ROM address is the new PC, the ROM has a buffered input
-    rom_address = if_new_pc;
-    rom_enable = if_pc_write_enable && pipe_enable;
+    imem_address = if_new_pc;
+    imem_enable = if_pc_write_enable && pipe_enable;
 end
 
 // -----
@@ -61,7 +61,7 @@ always_ff @(posedge clk) begin
         id_instruction <= 0;
         id_pc <= 0;
     end else if (ifid_instruction_write_enable && pipe_enable) begin
-        id_instruction <= rom_data;
+        id_instruction <= imem_data;
         id_pc <= if_pc;
     end
 end
@@ -106,8 +106,8 @@ hazard id_hazard_unit (
     .should_branch(ex_should_branch),
     .mem_control(mem_control),
     .wb_control(wb_control),
-    .rom_wait(rom_wait),
-    .ram_wait(ram_wait),
+    .imem_wait(imem_wait),
+    .dmem_wait(dmem_wait),
     .hazard(id_hazard),
     .if_pc_write_enable(if_pc_write_enable),
     .ifid_instruction_write_enable(ifid_instruction_write_enable),
@@ -242,13 +242,13 @@ end
 
 always_comb begin
     // RAM inputs are buffered in the RAM module
-    ram_address = ex_alu_result;
-    ram_enable = pipe_enable;
-    ram_write_data = ex_rs2;
-    ram_read_mode = ex_control.mem_read;
-    ram_read_enable = (ex_control.wb_select == MEM);
-    ram_write_mode = ex_control.mem_write;
-    ram_write_enable = ex_control.mem_write_enable;
+    dmem_address = ex_alu_result;
+    dmem_enable = pipe_enable;
+    dmem_write_data = ex_rs2;
+    dmem_read_mode = ex_control.mem_read;
+    dmem_read_enable = (ex_control.wb_select == MEM);
+    dmem_write_mode = ex_control.mem_write;
+    dmem_write_enable = ex_control.mem_write_enable;
 end
 
 // -----
@@ -269,7 +269,7 @@ always_ff @(posedge clk) begin
     end else if (pipe_enable) begin
         wb_control <= mem_control;
         wb_alu_result <= mem_alu_result;
-        wb_read_data <= ram_read_data;
+        wb_read_data <= dmem_read_data;
     end
 end
 

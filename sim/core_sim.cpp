@@ -27,13 +27,13 @@ int main(int argc, char const *argv[]) {
         tfp->open("trace.vcd");
     }
 
-    unsigned int rom_address = 0;
-    unsigned int ram_address = 0;
-    unsigned int ram_write_data = 0;
-    unsigned int ram_write_mode = 0;
-    unsigned int ram_write_enable = 0;
-    unsigned int ram_read_mode = 0;
-    unsigned int ram_read_enable = 0;
+    unsigned int imem_address = 0;
+    unsigned int dmem_address = 0;
+    unsigned int dmem_write_data = 0;
+    unsigned int dmem_write_mode = 0;
+    unsigned int dmem_write_enable = 0;
+    unsigned int dmem_read_mode = 0;
+    unsigned int dmem_read_enable = 0;
 
     core->reset_n = 0;
     core->clk = 1;
@@ -44,61 +44,61 @@ int main(int argc, char const *argv[]) {
 
     for (int i = 0; i < 1000000; i++) {
         // Load the ROM data
-        assert(rom_address >= 0x00000000 && rom_address <= 0x0000ffff);
-        core->rom_data = rom[(rom_address & 0xffff) >> 2];
+        assert(imem_address >= 0x00000000 && imem_address <= 0x0000ffff);
+        core->imem_data = rom[(imem_address & 0xffff) >> 2];
         // Load the RAM data
-        if (ram_read_enable) {
-            if (ram_address >= 0x80000000 && ram_address <= 0x8000ffff) {
-                if ((ram_read_mode & 0b11) == 0) {
-                    core->ram_read_data = ((unsigned char *) ram)[ram_address & 0xffff];
-                } else if ((ram_read_mode & 0b11) == 1) {
-                    core->ram_read_data = ((unsigned short *) ram)[(ram_address & 0xffff) >> 1];
-                } else if ((ram_read_mode & 0b11) == 2) {
-                    core->ram_read_data = ram[(ram_address & 0xffff) >> 2];
+        if (dmem_read_enable) {
+            if (dmem_address >= 0x80000000 && dmem_address <= 0x8000ffff) {
+                if ((dmem_read_mode & 0b11) == 0) {
+                    core->dmem_read_data = ((unsigned char *) ram)[dmem_address & 0xffff];
+                } else if ((dmem_read_mode & 0b11) == 1) {
+                    core->dmem_read_data = ((unsigned short *) ram)[(dmem_address & 0xffff) >> 1];
+                } else if ((dmem_read_mode & 0b11) == 2) {
+                    core->dmem_read_data = ram[(dmem_address & 0xffff) >> 2];
                 }
-                // printf("RAM read @ %.8x : %.8x (%d)\n", ram_address, core->ram_read_data, ram_read_mode);
-            } else if (ram_address <= 0x0000ffff) {
-                if ((ram_read_mode & 0b11) == 0) {
-                    core->ram_read_data = ((unsigned char *) rom)[ram_address & 0xffff];
-                } else if ((ram_read_mode & 0b11) == 1) {
-                    core->ram_read_data = ((unsigned short *) rom)[(ram_address & 0xffff) >> 1];
-                } else if ((ram_read_mode & 0b11) == 2) {
-                    core->ram_read_data = rom[(ram_address & 0xffff) >> 2];
+                // printf("RAM read @ %.8x : %.8x (%d)\n", dmem_address, core->dmem_read_data, dmem_read_mode);
+            } else if (dmem_address <= 0x0000ffff) {
+                if ((dmem_read_mode & 0b11) == 0) {
+                    core->dmem_read_data = ((unsigned char *) rom)[dmem_address & 0xffff];
+                } else if ((dmem_read_mode & 0b11) == 1) {
+                    core->dmem_read_data = ((unsigned short *) rom)[(dmem_address & 0xffff) >> 1];
+                } else if ((dmem_read_mode & 0b11) == 2) {
+                    core->dmem_read_data = rom[(dmem_address & 0xffff) >> 2];
                 }
-                // printf("ROM read @ %.8x : %.8x (%d)\n", ram_address, core->ram_read_data, ram_read_mode);
+                // printf("ROM read @ %.8x : %.8x (%d)\n", dmem_address, core->dmem_read_data, dmem_read_mode);
             } else {
                 assert(false);
             }
         }
         // Write to RAM
-        if (ram_write_enable) {
-            // printf("RAM write @ %.8x : %.8x (%d)\n", ram_address, ram_write_data, ram_write_mode);
-            if (ram_address == 0x70000000) {
-                printf("LED UPDATE: %d\n", ram_write_data);
+        if (dmem_write_enable) {
+            // printf("RAM write @ %.8x : %.8x (%d)\n", dmem_address, dmem_write_data, dmem_write_mode);
+            if (dmem_address == 0x70000000) {
+                printf("LED UPDATE: %d\n", dmem_write_data);
             } else {
-                assert(ram_address >= 0x80000000 && ram_address <= 0x8000ffff);
+                assert(dmem_address >= 0x80000000 && dmem_address <= 0x8000ffff);
 
-                if ((ram_write_mode & 0b11) == 0) {
-                    ((unsigned char *) ram)[ram_address & 0xffff] = (ram_write_data & 0xff);
-                } else if ((ram_write_mode & 0b11) == 1) {
-                    ((unsigned short *) ram)[(ram_address & 0xffff) >> 1] = (ram_write_data & 0xffff);
-                } else if ((ram_write_mode & 0b11) == 2) {
-                    ram[(ram_address & 0xffff) >> 2] = ram_write_data;
+                if ((dmem_write_mode & 0b11) == 0) {
+                    ((unsigned char *) ram)[dmem_address & 0xffff] = (dmem_write_data & 0xff);
+                } else if ((dmem_write_mode & 0b11) == 1) {
+                    ((unsigned short *) ram)[(dmem_address & 0xffff) >> 1] = (dmem_write_data & 0xffff);
+                } else if ((dmem_write_mode & 0b11) == 2) {
+                    ram[(dmem_address & 0xffff) >> 2] = dmem_write_data;
                 }
             }
         }
 
         // Clock in new ROM and RAM inputs
-        if (core->rom_enable) {
-            rom_address = core->rom_address;
+        if (core->imem_enable) {
+            imem_address = core->imem_address;
         }
-        if (core->ram_enable) {
-            ram_address = core->ram_address;
-            ram_write_data = core->ram_write_data;
-            ram_write_mode = core->ram_write_mode;
-            ram_write_enable = core->ram_write_enable;
-            ram_read_mode = core->ram_read_mode;
-            ram_read_enable = core->ram_read_enable;
+        if (core->dmem_enable) {
+            dmem_address = core->dmem_address;
+            dmem_write_data = core->dmem_write_data;
+            dmem_write_mode = core->dmem_write_mode;
+            dmem_write_enable = core->dmem_write_enable;
+            dmem_read_mode = core->dmem_read_mode;
+            dmem_read_enable = core->dmem_read_enable;
         }
 
         // Toggle the clock

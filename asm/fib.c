@@ -53,4 +53,10 @@ void main() {
         *LEDS = some_string[i];
         for (int j = 0; j < 10000000; j++) asm volatile ("nop");
     }
+
+    *LEDS = 0;
+    while (1) {
+        *LEDS += 1;
+        for (int j = 0; j < 1000000; j++) asm volatile ("nop");
+    }
 }
