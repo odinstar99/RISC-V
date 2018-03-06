@@ -29,6 +29,7 @@ static int global_data = 1234;
 static char *some_string = "Hello world!";
 
 #define LEDS ((volatile unsigned int *) 0x70000000)
+#define HEX ((volatile unsigned int *) 0x70000004)
 
 void main() {
     unsigned int n = 5;
@@ -49,14 +50,17 @@ void main() {
     }
     global_data = 4321;
 
+    *HEX = 0xdefec7;
     for (int i = 0; i < 12; i++) {
         *LEDS = some_string[i];
         for (int j = 0; j < 10000000; j++) asm volatile ("nop");
     }
 
     *LEDS = 0;
+    *HEX = 0;
     while (1) {
         *LEDS += 1;
+        *HEX += 1;
         for (int j = 0; j < 1000000; j++) asm volatile ("nop");
     }
 }

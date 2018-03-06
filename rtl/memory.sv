@@ -3,6 +3,7 @@ module memory(
     input reset_n,
 
     output [9:0] led,
+    output [47:0] hex,
 
     input [31:0] imem_address,
     input imem_enable,
@@ -50,7 +51,8 @@ mmio mmio0 (
     .data(mmio_write_data),
     .wren(mmio_write_enable),
     .q(mmio_q),
-    .led(led)
+    .led(led),
+    .hex(hex)
 );
 
 // ROM control signals

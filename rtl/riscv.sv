@@ -3,6 +3,12 @@ module riscv (
     input reset_n,
 
     output [9:0] led,
+    output [7:0] hex0,
+    output [7:0] hex1,
+    output [7:0] hex2,
+    output [7:0] hex3,
+    output [7:0] hex4,
+    output [7:0] hex5,
     input uart_rx,
     output uart_tx
 );
@@ -25,6 +31,16 @@ logic [2:0] dmem_read_mode;
 logic dmem_wait;
 
 logic illegal_op;
+logic [47:0] hex;
+
+always_comb begin
+    hex0 = hex[7:0];
+    hex1 = hex[15:8];
+    hex2 = hex[23:16];
+    hex3 = hex[31:24];
+    hex4 = hex[39:32];
+    hex5 = hex[47:40];
+end
 
 core core0 (
     .clk(clk),
@@ -52,6 +68,7 @@ memory memory0 (
     .reset_n(reset_n),
 
     .led(led),
+    .hex(hex),
 
     .imem_address(imem_address),
     .imem_enable(imem_enable),
