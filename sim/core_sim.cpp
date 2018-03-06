@@ -73,14 +73,18 @@ int main(int argc, char const *argv[]) {
         // Write to RAM
         if (ram_write_enable) {
             // printf("RAM write @ %.8x : %.8x (%d)\n", ram_address, ram_write_data, ram_write_mode);
-            assert(ram_address >= 0x80000000 && ram_address <= 0x8000ffff);
+            if (ram_address == 0x70000000) {
+                printf("LED UPDATE: %d\n", ram_write_data);
+            } else {
+                assert(ram_address >= 0x80000000 && ram_address <= 0x8000ffff);
 
-            if ((ram_write_mode & 0b11) == 0) {
-                ((unsigned char *) ram)[ram_address & 0xffff] = (ram_write_data & 0xff);
-            } else if ((ram_write_mode & 0b11) == 1) {
-                ((unsigned short *) ram)[(ram_address & 0xffff) >> 1] = (ram_write_data & 0xffff);
-            } else if ((ram_write_mode & 0b11) == 2) {
-                ram[(ram_address & 0xffff) >> 2] = ram_write_data;
+                if ((ram_write_mode & 0b11) == 0) {
+                    ((unsigned char *) ram)[ram_address & 0xffff] = (ram_write_data & 0xff);
+                } else if ((ram_write_mode & 0b11) == 1) {
+                    ((unsigned short *) ram)[(ram_address & 0xffff) >> 1] = (ram_write_data & 0xffff);
+                } else if ((ram_write_mode & 0b11) == 2) {
+                    ram[(ram_address & 0xffff) >> 2] = ram_write_data;
+                }
             }
         }
 

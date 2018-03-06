@@ -24,9 +24,11 @@ unsigned int fib_it(unsigned int n) {
     return fi;
 }
 
-unsigned int global_array[16];
-int global_data = 1234;
-char *some_string = "Hello world!";
+static unsigned int global_array[16];
+static int global_data = 1234;
+static char *some_string = "Hello world!";
+
+#define LEDS ((volatile unsigned int *) 0x70000000)
 
 void main() {
     unsigned int n = 5;
@@ -34,14 +36,21 @@ void main() {
     unsigned int iterative_result = fib_it(n);
 
     if (recursive_result != iterative_result) {
-        asm volatile ("ebreak");
+        *LEDS = 0x3ff;
+        while (1);
     }
 
     for (int i = 0; i < 16; i++) {
         global_array[i] = fib_it(i);
     }
     if (global_data != 1234) {
-        asm volatile ("ebreak");
+        *LEDS = 0x3fe;
+        while (1);
     }
     global_data = 4321;
+
+    for (int i = 0; i < 12; i++) {
+        *LEDS = some_string[i];
+        for (int j = 0; j < 10000000; j++) asm volatile ("nop");
+    }
 }
