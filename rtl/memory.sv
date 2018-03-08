@@ -34,13 +34,13 @@ rom rom0 (
 );
 
 ram ram0 (
-     .address(dmem_address[15:2]),
-     .byteena(ram_byteen),
-     .clken(ram_enable),
-     .clock(clk),
-     .data(ram_write_data),
-     .wren(ram_write_enable),
-     .q(ram_q)
+    .address(dmem_address[15:2]),
+    .byteena(ram_byteen),
+    .clken(ram_enable),
+    .clock(clk),
+    .data(ram_write_data),
+    .wren(ram_write_enable),
+    .q(ram_q)
 );
 
 mmio mmio0 (
@@ -155,8 +155,8 @@ always begin
         ram_write_data = dmem_write_data_internal;
         ram_byteen = dmem_byteen_internal;
     end else if (dmem_address[31:16] == 16'h0000) begin
-         // ROM
-         rom_enable = dmem_enable;
+        // ROM
+        rom_enable = dmem_enable;
     end else if (dmem_address[31:16] == 16'h7000) begin
         mmio_enable = dmem_enable;
         mmio_write_enable = dmem_write_enable;
