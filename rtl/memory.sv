@@ -103,15 +103,35 @@ always begin
             2: dmem_write_data_internal = {8'h0, dmem_write_data[7:0], 16'h0};
             3: dmem_write_data_internal = {dmem_write_data[7:0], 24'h0};
         endcase
-        dmem_byteen_internal = (4'b1 << (dmem_address[1:0]));
+        dmem_byteen_internal = (4'b1 << dmem_address[1:0]);
     end else if (dmem_write_mode[1:0] == 1) begin
         // Store halfword
-        dmem_write_data_internal = 0;
-        dmem_byteen_internal = 4'b0000;
+        case (dmem_address[1:0])
+            0: dmem_write_data_internal = {16'h0, dmem_write_data[15:0]};
+            1: dmem_write_data_internal = {8'h0, dmem_write_data[15:0], 8'h0};
+            2: dmem_write_data_internal = {dmem_write_data[15:0], 16'h0};
+            3: dmem_write_data_internal = 0;
+        endcase
+        case (dmem_address[1:0])
+            0: dmem_byteen_internal = 4'b0011;
+            1: dmem_byteen_internal = 4'b0110;
+            2: dmem_byteen_internal = 4'b1100;
+            3: dmem_byteen_internal = 4'b0000;
+        endcase
     end else if (dmem_write_mode[1:0] == 2) begin
         // Store word
-        dmem_write_data_internal = dmem_write_data;
-        dmem_byteen_internal = 4'b1111;
+        case (dmem_address[1:0])
+            0: dmem_write_data_internal = dmem_write_data;
+            1: dmem_write_data_internal = 0;
+            2: dmem_write_data_internal = 0;
+            3: dmem_write_data_internal = 0;
+        endcase
+        case (dmem_address[1:0])
+            0: dmem_byteen_internal = 4'b1111;
+            1: dmem_byteen_internal = 4'b0000;
+            2: dmem_byteen_internal = 4'b0000;
+            3: dmem_byteen_internal = 4'b0000;
+        endcase
     end
 
     // Default ROM settings
@@ -166,10 +186,20 @@ always begin
         endcase
      end else if (last_dmem_read_mode[1:0] == 1) begin
         // Read halfword
-        dmem_read_data = 0;
+        case (last_dmem_address[1:0])
+            0: dmem_read_data = {16'h0, dmem_read_data_internal[15:0]};
+            1: dmem_read_data = {16'h0, dmem_read_data_internal[23:7]};
+            2: dmem_read_data = {16'h0, dmem_read_data_internal[31:16]};
+            3: dmem_read_data = 0;
+        endcase
      end else if (last_dmem_read_mode[1:0] == 2) begin
         // Read word
-        dmem_read_data = dmem_read_data_internal;
+        case (last_dmem_address[1:0])
+            0: dmem_read_data = dmem_read_data_internal;
+            1: dmem_read_data = 0;
+            2: dmem_read_data = 0;
+            3: dmem_read_data = 0;
+        endcase
      end
 end
 
