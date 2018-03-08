@@ -28,11 +28,14 @@ static unsigned int global_array[16];
 static int global_data = 1234;
 static char *some_string = "Hello world!";
 
-#define LEDS ((volatile unsigned int *) 0x70000000)
-#define HEX ((volatile unsigned int *) 0x70000004)
-#define SWITCH ((volatile unsigned int *) 0x70000008)
+#define CONFIG ((volatile unsigned int *) 0x70000000)
+#define LEDS ((volatile unsigned int *) 0x70000004)
+#define HEX ((volatile unsigned int *) 0x70000008)
+#define SWITCH ((volatile unsigned int *) 0x70000010)
 
 void main() {
+    *CONFIG |= 1; // Enable leds
+
     unsigned int n = 5;
     unsigned int recursive_result = fib(n);
     unsigned int iterative_result = fib_it(n);

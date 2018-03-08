@@ -19,28 +19,50 @@ logic [3:0] internal_byteena;
 logic [31:0] internal_data;
 logic internal_wren;
 
+/*
+ * Config register:
+ * 0: Enable leds
+ * 1: Enable 7-segment displays
+ * 1: Hex mode (0: number, 1: segments)
+ */
+logic [2:0] config_state;
+logic [2:0] next_config_state;
+
 logic [9:0] led_state;
 logic [9:0] next_led_state;
 
-logic [23:0] hex_state;
-logic [23:0] next_hex_state;
+logic [47:0] hex_state;
+logic [47:0] next_hex_state;
+logic [47:0] hex_decoded;
 allsegments allsegments0 (
-    .in(hex_state),
-    .segments(hex)
+    .in(hex_state[23:0]),
+    .segments(hex_decoded)
 );
 
 logic [9:0] switch_state;
 
 always_comb begin
-    led = led_state;
-    next_led_state = led_state;
+    if (config_state[0]) begin
+        led = led_state;
+    end else begin
+        led = 0;
+    end
+    if (config_state[1]) begin
+        hex = (config_state[2] ? ~hex_state : hex_decoded);
+    end else begin
+        hex = 48'hffffffffffff;
+    end
 
+    next_config_state = config_state;
+    next_led_state = led_state;
     next_hex_state = hex_state;
 
     case (internal_address)
-        14'h0000: q = {22'b0, led_state};
-        14'h0001: q = {8'b0, hex_state};
-        14'h0002: q = {22'b0, switch_state};
+        14'h0000: q = {29'b0, config_state};
+        14'h0001: q = {22'b0, led_state};
+        14'h0002: q = hex_state[31:0];
+        14'h0003: q = {16'b0, hex_state[47:32]};
+        14'h0004: q = {22'b0, switch_state};
         default: q = 0;
     endcase
 
@@ -48,17 +70,29 @@ always_comb begin
         case (internal_address)
             14'h0000: begin
                 if (internal_byteena[0])
+                    next_config_state[2:0] = internal_data[2:0];
+            end
+            14'h0001: begin
+                if (internal_byteena[0])
                     next_led_state[7:0] = internal_data[7:0];
                 if (internal_byteena[1])
                     next_led_state[9:8] = internal_data[9:8];
             end
-            14'h0001: begin
+            14'h0002: begin
                 if (internal_byteena[0])
                     next_hex_state[7:0] = internal_data[7:0];
                 if (internal_byteena[1])
                     next_hex_state[15:8] = internal_data[15:8];
                 if (internal_byteena[2])
                     next_hex_state[23:16] = internal_data[23:16];
+                if (internal_byteena[3])
+                    next_hex_state[31:24] = internal_data[31:24];
+            end
+            14'h0003: begin
+                if (internal_byteena[0])
+                    next_hex_state[39:32] = internal_data[7:0];
+                if (internal_byteena[1])
+                    next_hex_state[47:40] = internal_data[15:8];
             end
         endcase
     end
@@ -83,9 +117,11 @@ always_ff @(posedge clock) begin
     if (!reset_n) begin
         led_state <= 0;
         hex_state <= 0;
+        config_state <= 0;
     end else begin
         led_state <= next_led_state;
         hex_state <= next_hex_state;
+        config_state <= next_config_state;
     end
     switch_state <= switch;
 end

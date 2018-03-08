@@ -1,6 +1,7 @@
-#define LEDS ((volatile unsigned int *) 0x70000000)
-#define HEX ((volatile unsigned int *) 0x70000004)
-#define SWITCH ((volatile unsigned int *) 0x70000008)
+#define CONFIG ((volatile unsigned int *) 0x70000000)
+#define LEDS ((volatile unsigned int *) 0x70000004)
+#define HEX ((volatile unsigned int *) 0x70000008)
+#define SWITCH ((volatile unsigned int *) 0x70000010)
 
 unsigned int lw(unsigned char *addr) {
     unsigned int result;
@@ -59,6 +60,8 @@ unsigned char data[] = {0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef};
 unsigned char empty[8] = {0};
 
 void main() {
+    *CONFIG |= 2; // Enable 7-segment display
+
     compare_byte(data[0], 0x12, __LINE__);
     compare_byte(data[1], 0x34, __LINE__);
     compare_byte(data[2], 0x56, __LINE__);
@@ -143,5 +146,6 @@ void main() {
     compare_word(empty_ptr[1], 0x12340000, __LINE__);
     empty_ptr[0] = 0; empty_ptr[1] = 0;
 
-    *HEX = 0x888888;
+    *CONFIG |= 4; // Enable segment mode
+    *HEX = 0x5e5c5479;
 }
