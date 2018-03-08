@@ -2,22 +2,34 @@
 #define HEX ((volatile unsigned int *) 0x70000004)
 #define SWITCH ((volatile unsigned int *) 0x70000008)
 
-unsigned int __attribute__ ((noinline)) lw(unsigned char *addr) {
+unsigned int lw(unsigned char *addr) {
     unsigned int result;
-    asm volatile ("lw %0, 0(%1)" : "=r"(result) : "r"(addr));
+    asm volatile ("lw %0, 0(%1)" : "=r"(result) : "r"(addr), "m"(*addr));
     return result;
 }
 
-unsigned short __attribute__ ((noinline)) lhu(unsigned char *addr) {
+void sw(unsigned char *addr, unsigned int value) {
+    asm volatile ("sw %0, 0(%1)" : : "r"(value), "r"(addr) : "memory");
+}
+
+unsigned short lhu(unsigned char *addr) {
     unsigned short result;
-    asm volatile ("lhu %0, 0(%1)" : "=r"(result) : "r"(addr));
+    asm volatile ("lhu %0, 0(%1)" : "=r"(result) : "r"(addr), "m"(*addr));
     return result;
+}
+
+void sh(unsigned char *addr, unsigned int value) {
+    asm volatile ("sh %0, 0(%1)" : : "r"(value), "r"(addr) : "memory");
 }
 
 void compare_byte(unsigned char a, unsigned char b, unsigned int line) {
     if (a != b) {
         *HEX = (0xff << 16) | line;
         while (1);
+    }
+    if (*SWITCH) {
+        *HEX = line;
+        for (int i = 0; i < 5000000; i++) asm volatile ("nop");
     }
 }
 
@@ -26,12 +38,20 @@ void compare_halfword(unsigned short a, unsigned short b, unsigned int line) {
         *HEX = (0xff << 16) | line;
         while (1);
     }
+    if (*SWITCH) {
+        *HEX = line;
+        for (int i = 0; i < 5000000; i++) asm volatile ("nop");
+    }
 }
 
 void compare_word(unsigned int a, unsigned int b, unsigned int line) {
     if (a != b) {
         *HEX = (0xff << 16) | line;
         while (1);
+    }
+    if (*SWITCH) {
+        *HEX = line;
+        for (int i = 0; i < 5000000; i++) asm volatile ("nop");
     }
 }
 
@@ -63,64 +83,64 @@ void main() {
     compare_word(lw(data + 4), 0xefcdab90, __LINE__);
 
     unsigned int *empty_ptr = (unsigned int *) empty;
-    *((unsigned int *) (empty + 0)) = 0x12345678;
-    compare_word(lw(empty + 0), 0x12345678, __LINE__);
-    compare_word(lw(empty + 4), 0x00000000, __LINE__);
+    sw(empty + 0, 0x12345678);
+    compare_word(empty_ptr[0], 0x12345678, __LINE__);
+    compare_word(empty_ptr[1], 0x00000000, __LINE__);
     empty_ptr[0] = 0; empty_ptr[1] = 0;
 
-    *((unsigned int *) (empty + 1)) = 0x12345678;
-    compare_word(lw(empty + 0), 0x34567800, __LINE__);
-    compare_word(lw(empty + 4), 0x00000012, __LINE__);
+    sw(empty + 1, 0x12345678);
+    compare_word(empty_ptr[0], 0x34567800, __LINE__);
+    compare_word(empty_ptr[1], 0x00000012, __LINE__);
     empty_ptr[0] = 0; empty_ptr[1] = 0;
 
-    *((unsigned int *) (empty + 2)) = 0x12345678;
-    compare_word(lw(empty + 0), 0x56780000, __LINE__);
-    compare_word(lw(empty + 4), 0x00001234, __LINE__);
+    sw(empty + 2, 0x12345678);
+    compare_word(empty_ptr[0], 0x56780000, __LINE__);
+    compare_word(empty_ptr[1], 0x00001234, __LINE__);
     empty_ptr[0] = 0; empty_ptr[1] = 0;
 
-    *((unsigned int *) (empty + 3)) = 0x12345678;
-    compare_word(lw(empty + 0), 0x78000000, __LINE__);
-    compare_word(lw(empty + 4), 0x00123456, __LINE__);
+    sw(empty + 3, 0x12345678);
+    compare_word(empty_ptr[0], 0x78000000, __LINE__);
+    compare_word(empty_ptr[1], 0x00123456, __LINE__);
     empty_ptr[0] = 0; empty_ptr[1] = 0;
 
-    *((unsigned int *) (empty + 4)) = 0x12345678;
-    compare_word(lw(empty + 0), 0X00000000, __LINE__);
-    compare_word(lw(empty + 4), 0x12345678, __LINE__);
+    sw(empty + 4, 0x12345678);
+    compare_word(empty_ptr[0], 0X00000000, __LINE__);
+    compare_word(empty_ptr[1], 0x12345678, __LINE__);
     empty_ptr[0] = 0; empty_ptr[1] = 0;
 
-    *((unsigned short *) (empty + 0)) = 0x1234;
-    compare_word(lw(empty + 0), 0X00001234, __LINE__);
-    compare_word(lw(empty + 4), 0x00000000, __LINE__);
+    sh(empty + 0, 0x1234);
+    compare_word(empty_ptr[0], 0X00001234, __LINE__);
+    compare_word(empty_ptr[1], 0x00000000, __LINE__);
     empty_ptr[0] = 0; empty_ptr[1] = 0;
 
-    *((unsigned short *) (empty + 1)) = 0x1234;
-    compare_word(lw(empty + 0), 0X00123400, __LINE__);
-    compare_word(lw(empty + 4), 0x00000000, __LINE__);
+    sh(empty + 1, 0x1234);
+    compare_word(empty_ptr[0], 0X00123400, __LINE__);
+    compare_word(empty_ptr[1], 0x00000000, __LINE__);
     empty_ptr[0] = 0; empty_ptr[1] = 0;
 
-    *((unsigned short *) (empty + 2)) = 0x1234;
-    compare_word(lw(empty + 0), 0X12340000, __LINE__);
-    compare_word(lw(empty + 4), 0x00000000, __LINE__);
+    sh(empty + 2, 0x1234);
+    compare_word(empty_ptr[0], 0X12340000, __LINE__);
+    compare_word(empty_ptr[1], 0x00000000, __LINE__);
     empty_ptr[0] = 0; empty_ptr[1] = 0;
 
-    *((unsigned short *) (empty + 3)) = 0x1234;
-    compare_word(lw(empty + 0), 0X34000000, __LINE__);
-    compare_word(lw(empty + 4), 0x00000012, __LINE__);
+    sh(empty + 3, 0x1234);
+    compare_word(empty_ptr[0], 0X34000000, __LINE__);
+    compare_word(empty_ptr[1], 0x00000012, __LINE__);
     empty_ptr[0] = 0; empty_ptr[1] = 0;
 
-    *((unsigned short *) (empty + 4)) = 0x1234;
-    compare_word(lw(empty + 0), 0X00000000, __LINE__);
-    compare_word(lw(empty + 4), 0x00001234, __LINE__);
+    sh(empty + 4, 0x1234);
+    compare_word(empty_ptr[0], 0X00000000, __LINE__);
+    compare_word(empty_ptr[1], 0x00001234, __LINE__);
     empty_ptr[0] = 0; empty_ptr[1] = 0;
 
-    *((unsigned short *) (empty + 5)) = 0x1234;
-    compare_word(lw(empty + 0), 0X00000000, __LINE__);
-    compare_word(lw(empty + 4), 0x00123400, __LINE__);
+    sh(empty + 5, 0x1234);
+    compare_word(empty_ptr[0], 0X00000000, __LINE__);
+    compare_word(empty_ptr[1], 0x00123400, __LINE__);
     empty_ptr[0] = 0; empty_ptr[1] = 0;
 
-    *((unsigned short *) (empty + 6)) = 0x1234;
-    compare_word(lw(empty + 0), 0X00000000, __LINE__);
-    compare_word(lw(empty + 4), 0x12340000, __LINE__);
+    sh(empty + 6, 0x1234);
+    compare_word(empty_ptr[0], 0X00000000, __LINE__);
+    compare_word(empty_ptr[1], 0x12340000, __LINE__);
     empty_ptr[0] = 0; empty_ptr[1] = 0;
 
     *HEX = 0x888888;
