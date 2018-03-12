@@ -148,4 +148,6 @@ void main() {
 
     *CONFIG |= 4; // Enable segment mode
     *HEX = 0x5e5c5479;
+    for (int i = 0; i < 25000000; i++) asm volatile ("nop");
+    *CONFIG = 0; // Disable lighting
 }
