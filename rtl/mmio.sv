@@ -11,7 +11,8 @@ module mmio (
 
     output [9:0] led,
     output [47:0] hex,
-    input [9:0] switch
+    input [9:0] switch,
+    output [11:0] bg_color
 );
 
 logic [13:0] internal_address;
@@ -41,6 +42,9 @@ allsegments allsegments0 (
 
 logic [9:0] switch_state;
 
+logic [11:0] bg_color_state;
+logic [11:0] next_bg_color_state;
+
 always_comb begin
     if (config_state[0]) begin
         led = led_state;
@@ -52,10 +56,12 @@ always_comb begin
     end else begin
         hex = 48'hffffffffffff;
     end
+    bg_color = bg_color_state;
 
     next_config_state = config_state;
     next_led_state = led_state;
     next_hex_state = hex_state;
+    next_bg_color_state = bg_color_state;
 
     case (internal_address)
         14'h0000: q = {29'b0, config_state};
@@ -63,6 +69,7 @@ always_comb begin
         14'h0002: q = hex_state[31:0];
         14'h0003: q = {16'b0, hex_state[47:32]};
         14'h0004: q = {22'b0, switch_state};
+        14'h0005: q = {20'b0, bg_color_state};
         default: q = 0;
     endcase
 
@@ -94,6 +101,12 @@ always_comb begin
                 if (internal_byteena[1])
                     next_hex_state[47:40] = internal_data[15:8];
             end
+            14'h0005: begin
+                if (internal_byteena[0])
+                    next_bg_color_state[7:0] = internal_data[7:0];
+                if (internal_byteena[1])
+                    next_bg_color_state[11:8] = internal_data[11:8];
+            end
         endcase
     end
 end
@@ -118,10 +131,12 @@ always_ff @(posedge clock) begin
         led_state <= 0;
         hex_state <= 0;
         config_state <= 0;
+        bg_color_state <= 0;
     end else begin
         led_state <= next_led_state;
         hex_state <= next_hex_state;
         config_state <= next_config_state;
+        bg_color_state <= next_bg_color_state;
     end
     switch_state <= switch;
 end

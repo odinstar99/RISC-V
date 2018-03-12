@@ -11,8 +11,16 @@ module riscv (
     output [7:0] hex5,
     input [9:0] switch,
     input uart_rx,
-    output uart_tx
+    output uart_tx,
+    output [3:0] vga_r,
+    output [3:0] vga_g,
+    output [3:0] vga_b,
+    output vga_hs,
+    output vga_vs
 );
+
+logic core_clk;
+logic vga_clk;
 
 // Instruction memory signals
 logic [31:0] imem_address;
@@ -34,6 +42,8 @@ logic dmem_wait;
 logic illegal_op;
 logic [47:0] hex;
 
+logic [11:0] bg_color;
+
 always_comb begin
     hex0 = hex[7:0];
     hex1 = hex[15:8];
@@ -43,8 +53,14 @@ always_comb begin
     hex5 = hex[47:40];
 end
 
+pll pll0 (
+    .inclk0(clk),
+    .c0(core_clk),
+    .c1(vga_clk)
+);
+
 core core0 (
-    .clk(clk),
+    .clk(core_clk),
     .reset_n(reset_n),
     .illegal_op(illegal_op),
 
@@ -65,12 +81,13 @@ core core0 (
 );
 
 memory memory0 (
-    .clk(clk),
+    .clk(core_clk),
     .reset_n(reset_n),
 
     .led(led),
     .hex(hex),
     .switch(switch),
+    .bg_color(bg_color),
 
     .imem_address(imem_address),
     .imem_enable(imem_enable),
@@ -86,6 +103,18 @@ memory memory0 (
     .dmem_read_enable(dmem_read_enable),
     .dmem_read_mode(dmem_read_mode),
     .dmem_wait(dmem_wait)
+);
+
+vga vga0 (
+    .vga_clk(vga_clk),
+    .reset_n(reset_n),
+    .bg_color(bg_color),
+
+    .vga_r(vga_r),
+    .vga_g(vga_g),
+    .vga_b(vga_b),
+    .vga_hs(vga_hs),
+    .vga_vs(vga_vs)
 );
 
 endmodule
