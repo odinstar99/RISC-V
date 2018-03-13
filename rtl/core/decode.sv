@@ -155,17 +155,20 @@ always_comb begin
             control.mem_write = 0;
             control.mem_read = 0;
 
-            case (funct3)
-                3'b000: control.alu_op = (instruction[30] && opcode == 7'b0110011) ? SUB : ADD;
-                3'b001: control.alu_op = SLL;
-                3'b010: control.alu_op = LT;
-                3'b011: control.alu_op = LTU;
-                3'b100: control.alu_op = XOR;
-                3'b101: control.alu_op = (instruction[30]) ? SRA : SRL;
-                3'b110: control.alu_op = OR;
-                3'b111: control.alu_op = AND;
-                default: control.alu_op = ADD;
-            endcase
+            if (opcode == 7'b0010011 || instruction[31:25] == 7'b0 || instruction[31:25] == 7'h20) begin
+                case (funct3)
+                    3'b000: control.alu_op = (instruction[30] && opcode == 7'b0110011) ? SUB : ADD;
+                    3'b001: control.alu_op = SLL;
+                    3'b010: control.alu_op = LT;
+                    3'b011: control.alu_op = LTU;
+                    3'b100: control.alu_op = XOR;
+                    3'b101: control.alu_op = (instruction[30]) ? SRA : SRL;
+                    3'b110: control.alu_op = OR;
+                    3'b111: control.alu_op = AND;
+                endcase
+            end else begin
+                illegal_op = 1;
+            end
         end
         default: begin // Unknown operation
             illegal_op = 1;
