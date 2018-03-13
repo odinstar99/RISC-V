@@ -11,6 +11,8 @@ module memory(
     output [47:0] hex,
     input [9:0] switch,
     output [11:0] bg_color,
+    input uart_rx,
+    output uart_tx,
 
     input [31:0] imem_address,
     input imem_enable,
@@ -61,7 +63,9 @@ mmio mmio0 (
     .led(led),
     .hex(hex),
     .switch(switch),
-    .bg_color(bg_color)
+    .bg_color(bg_color),
+    .uart_rx(uart_rx),
+    .uart_tx(uart_tx)
 );
 
 logic [31:0] selected_dmem_address;

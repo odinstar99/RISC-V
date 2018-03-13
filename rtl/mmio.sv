@@ -12,7 +12,9 @@ module mmio (
     output [9:0] led,
     output [47:0] hex,
     input [9:0] switch,
-    output [11:0] bg_color
+    output [11:0] bg_color,
+    input uart_rx,
+    output uart_tx
 );
 
 logic [13:0] internal_address;
@@ -45,6 +47,21 @@ logic [9:0] switch_state;
 logic [11:0] bg_color_state;
 logic [11:0] next_bg_color_state;
 
+logic [7:0] uart_tx_data;
+logic [7:0] next_uart_tx_data;
+logic uart_transmit;
+logic next_uart_transmit;
+logic uart_busy;
+uart uart0 (
+    .clk(clock),
+    .reset_n(reset_n),
+    .uart_rx(uart_rx),
+    .uart_tx(uart_tx),
+    .tx_data(uart_tx_data),
+    .tx_enable(uart_transmit),
+    .tx_busy(uart_busy)
+);
+
 always_comb begin
     if (config_state[0]) begin
         led = led_state;
@@ -62,6 +79,8 @@ always_comb begin
     next_led_state = led_state;
     next_hex_state = hex_state;
     next_bg_color_state = bg_color_state;
+    next_uart_tx_data = uart_tx_data;
+    next_uart_transmit = (uart_busy ? 1'b0 : uart_transmit);
 
     case (internal_address)
         14'h0000: q = {29'b0, config_state};
@@ -70,6 +89,8 @@ always_comb begin
         14'h0003: q = {16'b0, hex_state[47:32]};
         14'h0004: q = {22'b0, switch_state};
         14'h0005: q = {20'b0, bg_color_state};
+        14'h0010: q = {31'b0, uart_busy};
+        14'h0011: q = {24'b0, uart_tx_data};
         default: q = 0;
     endcase
 
@@ -107,6 +128,12 @@ always_comb begin
                 if (internal_byteena[1])
                     next_bg_color_state[11:8] = internal_data[11:8];
             end
+            14'h0011: begin
+                if (!uart_busy)
+                    next_uart_transmit = 1;
+                if (internal_byteena[0])
+                    next_uart_tx_data[7:0] = internal_data[7:0];
+            end
         endcase
     end
 end
@@ -132,11 +159,15 @@ always_ff @(posedge clock) begin
         hex_state <= 0;
         config_state <= 0;
         bg_color_state <= 0;
+        uart_tx_data <= 0;
+        uart_transmit <= 0;
     end else begin
         led_state <= next_led_state;
         hex_state <= next_hex_state;
         config_state <= next_config_state;
         bg_color_state <= next_bg_color_state;
+        uart_tx_data <= next_uart_tx_data;
+        uart_transmit <= next_uart_transmit;
     end
     switch_state <= switch;
 end

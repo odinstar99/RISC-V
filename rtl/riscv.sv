@@ -88,6 +88,8 @@ memory memory0 (
     .hex(hex),
     .switch(switch),
     .bg_color(bg_color),
+    .uart_rx(uart_rx),
+    .uart_tx(uart_tx),
 
     .imem_address(imem_address),
     .imem_enable(imem_enable),
