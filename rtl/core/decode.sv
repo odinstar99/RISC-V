@@ -113,7 +113,7 @@ always_comb begin
                 3'b111: control.alu_op = GEU;
                 default: begin
                     illegal_op = 1;
-                    control.alu_op = ADD;
+                    control = 0;
                 end
             endcase
         end
@@ -168,6 +168,7 @@ always_comb begin
                 endcase
             end else begin
                 illegal_op = 1;
+                control = 0;
             end
         end
         default: begin // Unknown operation
