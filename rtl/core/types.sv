@@ -42,7 +42,7 @@ typedef enum {
 } branch_target_t;
 
 typedef enum {
-    REG,
+    ALU,
     MEM,
     CSR
 } writeback_t;

@@ -323,7 +323,7 @@ always_comb begin
 
     // Select the result to be written into the register
     case (wb_control.wb_select)
-        REG: wb_result = wb_alu_result;
+        ALU: wb_result = wb_alu_result;
         MEM: wb_result = wb_read_data_extended;
         CSR: wb_result = wb_csr_result;
     endcase

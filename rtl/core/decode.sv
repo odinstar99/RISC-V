@@ -49,7 +49,7 @@ always_comb begin
     case (opcode)
         7'b0110111: begin // LUI
             control.write_reg = 1;
-            control.wb_select = REG;
+            control.wb_select = ALU;
             control.alu_op = IMM;
             control.alu_select1 = REG1;
             control.alu_select2 = IMMEDIATE;
@@ -61,7 +61,7 @@ always_comb begin
         end
         7'b0010111: begin // AUIPC
             control.write_reg = 1;
-            control.wb_select = REG;
+            control.wb_select = ALU;
             control.alu_op = ADD;
             control.alu_select1 = PC;
             control.alu_select2 = IMMEDIATE;
@@ -73,7 +73,7 @@ always_comb begin
         end
         7'b1101111: begin // JAL
             control.write_reg = 1;
-            control.wb_select = REG;
+            control.wb_select = ALU;
             control.alu_op = PC4;
             control.alu_select1 = PC;
             control.alu_select2 = REG2;
@@ -85,7 +85,7 @@ always_comb begin
         end
         7'b1100111: begin // JALR
             control.write_reg = 1;
-            control.wb_select = REG;
+            control.wb_select = ALU;
             control.alu_op = PC4;
             control.alu_select1 = PC;
             control.alu_select2 = REG2;
@@ -97,7 +97,7 @@ always_comb begin
         end
         7'b1100011: begin // BRANCH
             control.write_reg = 0;
-            control.wb_select = REG;
+            control.wb_select = ALU;
             control.alu_select1 = REG1;
             control.alu_select2 = REG2;
             control.branch_mode = CONDITIONAL;
@@ -132,7 +132,7 @@ always_comb begin
         end
         7'b0100011: begin // STORE
             control.write_reg = 0;
-            control.wb_select = REG;
+            control.wb_select = ALU;
             control.alu_op = ADD;
             control.alu_select1 = REG1;
             control.alu_select2 = IMMEDIATE;
@@ -144,7 +144,7 @@ always_comb begin
         end
         7'b0010011, 7'b0110011: begin // ALUIMM, ALUREG
             control.write_reg = 1;
-            control.wb_select = REG;
+            control.wb_select = ALU;
             control.alu_select1 = REG1;
             if (opcode == 7'b0010011)
                 control.alu_select2 = IMMEDIATE;
