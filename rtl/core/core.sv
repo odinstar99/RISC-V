@@ -34,7 +34,9 @@ always_ff @(posedge clk) begin
         instret_counter <= 0;
     end else begin
         cycle_counter <= cycle_counter + 1;
-        instret_counter <= instret_counter + wb_control.instruction_valid;
+        if (pipe_enable) begin
+            instret_counter <= instret_counter + wb_control.instruction_valid;
+        end
     end
 end
 
