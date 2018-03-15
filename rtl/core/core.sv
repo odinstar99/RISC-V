@@ -41,30 +41,53 @@ always_ff @(posedge clk) begin
 end
 
 // -----
-// Instruction fetch stage
+// Program counter generation stage
 // -----
-logic [31:0] if_pc;
-logic [31:0] if_new_pc;
-logic if_pc_write_enable;
+logic [31:0] pc_pc;
+logic [31:0] pc_new_pc;
+logic pc_pc_write_enable;
 
 always_ff @(posedge clk) begin
     if (!reset_n) begin
-        if_pc <= 0;
-    end else if (if_pc_write_enable && pipe_enable) begin
-        if_pc <= if_new_pc;
+        pc_pc <= 32'h10;
+    end else if (pc_pc_write_enable && pipe_enable) begin
+        pc_pc <= pc_new_pc;
     end
 end
 
 always_comb begin
     // Select the new PC based on if we are branching
     if (ex_should_branch) begin
-        if_new_pc = ex_branch;
+        pc_new_pc = ex_branch;
     end else begin
-        if_new_pc = if_pc + 4;
+        pc_new_pc = pc_pc + 4;
+    end
+end
+
+// -----
+// Instruction fetch stage
+// -----
+logic [31:0] if_pc;
+logic if_pc_write_enable;
+logic if_valid;
+
+always_ff @(posedge clk) begin
+    if (!reset_n) begin
+        if_pc <= 0;
+    end else if (if_pc_write_enable && pipe_enable) begin
+        if_pc <= pc_pc;
     end
 
+    if (!reset_n) begin
+        if_valid <= 0;
+    end else begin
+        if_valid <= 1;
+    end
+end
+
+always_comb begin
     // The requested ROM address is the new PC, the ROM has a buffered input
-    imem_address = if_new_pc;
+    imem_address = pc_pc;
     imem_enable = if_pc_write_enable && pipe_enable;
 end
 
@@ -81,6 +104,12 @@ always_ff @(posedge clk) begin
         id_instruction <= imem_data;
         id_pc <= if_pc;
     end
+
+    if (!reset_n) begin
+        id_instruction_valid <= 0;
+    end else begin
+        id_instruction_valid <= if_valid;
+    end
 end
 
 // -----
@@ -89,6 +118,7 @@ end
 logic [31:0] id_pc;
 
 logic [31:0] id_instruction;
+logic id_instruction_valid;
 logic [4:0] id_rs1;
 logic [31:0] id_rs1_val;
 logic [4:0] id_rs2;
@@ -123,7 +153,9 @@ hazard id_hazard_unit (
     .wb_control(wb_control),
     .imem_wait(imem_wait),
     .dmem_wait(dmem_wait),
+    .instruction_valid(id_instruction_valid),
     .hazard(id_hazard),
+    .pc_pc_write_enable(pc_pc_write_enable),
     .if_pc_write_enable(if_pc_write_enable),
     .ifid_instruction_write_enable(ifid_instruction_write_enable),
     .pipe_enable(pipe_enable),
@@ -144,7 +176,7 @@ regfile id_regfile (
 );
 
 always_comb begin
-    if (id_hazard) begin
+    if (id_hazard || illegal_op || !id_instruction_valid) begin
         id_control = 0;
     end else begin
         id_control = id_control_prelim;
@@ -203,6 +235,7 @@ logic [31:0] ex_branch;
 logic ex_should_branch;
 
 control_t ex_control;
+control_t ex_control_branch;
 
 alu ex_alu (
     .operation(ex_control.alu_op),
@@ -240,6 +273,9 @@ always_comb begin
     end else begin
         ex_should_branch = 0;
     end
+
+    ex_control_branch = ex_control;
+    ex_control_branch.branch_taken = ex_should_branch;
 end
 
 // -----
@@ -250,7 +286,7 @@ always_ff @(posedge clk) begin
         mem_control <= 0;
         mem_alu_result <= 0;
     end else if (pipe_enable) begin
-        mem_control <= ex_control;
+        mem_control <= ex_control_branch;
         mem_alu_result <= ex_alu_result;
     end
 end

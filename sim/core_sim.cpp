@@ -116,7 +116,7 @@ int main(int argc, char const *argv[]) {
         }
     }
 
-    unsigned char *buf_o = ((unsigned char *) ram + 0x400);
+    unsigned char *buf_o = ((unsigned char *) ram + 0x410);
     for (int y = 0; y < 32; y++) {
         for (int x = 0; x < 32; x++) {
             printf("%.2x", buf_o[x + y * 32]);

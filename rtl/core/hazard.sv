@@ -10,7 +10,9 @@ module hazard (
     input control_t wb_control,
     input imem_wait,
     input dmem_wait,
+    input instruction_valid,
     output hazard,
+    output pc_pc_write_enable,
     output if_pc_write_enable,
     output ifid_instruction_write_enable,
     output pipe_enable,
@@ -20,6 +22,7 @@ module hazard (
 
 always_comb begin
     hazard = 0;
+    pc_pc_write_enable = 1;
     if_pc_write_enable = 1;
     ifid_instruction_write_enable = 1;
     pipe_enable = 1;
@@ -35,6 +38,7 @@ always_comb begin
         (mem_control.wb_select != ALU && mem_control.write_reg && (mem_control.rd == rs1 || mem_control.rd == rs2) && mem_control.rd != 0))
     begin
         hazard = 1;
+        pc_pc_write_enable = 0;
         if_pc_write_enable = 0;
         ifid_instruction_write_enable = 0;
     end else begin
@@ -69,18 +73,33 @@ always_comb begin
     // end
 
     // Branching hazards
-    if (mem_control.branch_mode != NEVER) begin
+    if (wb_control.branch_mode != NEVER && wb_control.branch_taken) begin
         hazard = 1;
+        pc_pc_write_enable = 1;
         if_pc_write_enable = 1;
         ifid_instruction_write_enable = 1;
+    end else if (mem_control.branch_mode != NEVER && mem_control.branch_taken) begin
+        hazard = 1;
+        pc_pc_write_enable = 1;
+        if_pc_write_enable = 1;
+        ifid_instruction_write_enable = 0;
     end else if (ex_control.branch_mode != NEVER) begin
         hazard = 1;
-        if_pc_write_enable = should_branch;
-        ifid_instruction_write_enable = 0;
+        pc_pc_write_enable = 1;
+        if_pc_write_enable = !should_branch;
+        ifid_instruction_write_enable = !should_branch;
     end else if (id_control.branch_mode != NEVER && hazard == 0) begin
         hazard = 0;
+        pc_pc_write_enable = 0;
         if_pc_write_enable = 0;
         ifid_instruction_write_enable = 0;
+    end
+
+    if (!instruction_valid) begin
+        hazard = 0;
+        pc_pc_write_enable = 1;
+        if_pc_write_enable = 1;
+        ifid_instruction_write_enable = 1;
     end
 end
 

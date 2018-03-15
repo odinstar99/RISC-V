@@ -45,6 +45,7 @@ always_comb begin
 
     illegal_op = 0;
     control.instruction_valid = 1;
+    control.branch_taken = 0;
     // Decode instruction to correct control signals
     case (opcode)
         7'b0110111: begin // LUI

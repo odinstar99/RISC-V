@@ -3,6 +3,10 @@
 
 .global _entry
 _entry:
+    j _entry
+    j _entry
+    j _entry
+    j _entry
     j start
 
 .section .text.start
