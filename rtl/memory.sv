@@ -1,4 +1,4 @@
-typedef enum {
+typedef enum bit [0:0] {
     NORMAL,
     UNALIGNED
 } memory_state_t;
