@@ -60,8 +60,9 @@ always_comb begin
     if (ex_should_branch) begin
         pc_new_pc = ex_branch;
     end else begin
-        pc_new_pc = pc_pc + 4;
+        pc_new_pc = pc_pc;
     end
+    pc_new_pc = pc_new_pc + 4;
 end
 
 // -----
@@ -75,7 +76,11 @@ always_ff @(posedge clk) begin
     if (!reset_n) begin
         if_pc <= 0;
     end else if (if_pc_write_enable && pipe_enable) begin
-        if_pc <= pc_pc;
+        if (ex_should_branch) begin
+            if_pc <= ex_branch;
+        end else begin
+            if_pc <= pc_pc;
+        end
     end
 
     if (!reset_n) begin
@@ -87,7 +92,11 @@ end
 
 always_comb begin
     // The requested ROM address is the new PC, the ROM has a buffered input
-    imem_address = pc_pc;
+    if (ex_should_branch) begin
+        imem_address = ex_branch;
+    end else begin
+        imem_address = pc_pc;
+    end
     imem_enable = if_pc_write_enable && pipe_enable;
 end
 

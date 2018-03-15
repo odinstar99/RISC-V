@@ -73,20 +73,15 @@ always_comb begin
     // end
 
     // Branching hazards
-    if (wb_control.branch_mode != NEVER && wb_control.branch_taken) begin
+    if (mem_control.branch_mode != NEVER && mem_control.branch_taken) begin
         hazard = 1;
         pc_pc_write_enable = 1;
         if_pc_write_enable = 1;
         ifid_instruction_write_enable = 1;
-    end else if (mem_control.branch_mode != NEVER && mem_control.branch_taken) begin
-        hazard = 1;
-        pc_pc_write_enable = 1;
-        if_pc_write_enable = 1;
-        ifid_instruction_write_enable = 0;
     end else if (ex_control.branch_mode != NEVER) begin
         hazard = 1;
         pc_pc_write_enable = 1;
-        if_pc_write_enable = !should_branch;
+        if_pc_write_enable = 1;
         ifid_instruction_write_enable = !should_branch;
     end else if (id_control.branch_mode != NEVER && hazard == 0) begin
         hazard = 0;
