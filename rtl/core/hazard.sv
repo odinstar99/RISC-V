@@ -31,8 +31,8 @@ always_comb begin
     end
 
     // Forwarding logic
-    if ((ex_control.wb_select == MEM && ex_control.write_reg && (ex_control.rd == rs1 || ex_control.rd == rs2) && ex_control.rd != 0) ||
-        (mem_control.wb_select == MEM && mem_control.write_reg && (mem_control.rd == rs1 || mem_control.rd == rs2) && mem_control.rd != 0))
+    if ((ex_control.wb_select != REG && ex_control.write_reg && (ex_control.rd == rs1 || ex_control.rd == rs2) && ex_control.rd != 0) ||
+        (mem_control.wb_select != REG && mem_control.write_reg && (mem_control.rd == rs1 || mem_control.rd == rs2) && mem_control.rd != 0))
     begin
         hazard = 1;
         if_pc_write_enable = 0;

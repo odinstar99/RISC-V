@@ -43,7 +43,8 @@ typedef enum {
 
 typedef enum {
     REG,
-    MEM
+    MEM,
+    CSR
 } writeback_t;
 
 typedef enum {
@@ -65,6 +66,7 @@ typedef struct packed {
     logic mem_write_enable;
     logic [2:0] mem_write;
     logic [2:0] mem_read;
+    logic instruction_valid;
 } control_t;
 
 `endif

@@ -47,3 +47,19 @@ clear_bss_loop_end:
     ebreak
 end_loop:
     j       end_loop
+
+.global riscv_cycles
+riscv_cycles:
+    rdcycleh a1
+    rdcycle a0
+    rdcycleh t0
+    bne     a1, t0, riscv_cycles
+    ret
+
+.global riscv_instret
+riscv_instret:
+    rdinstreth a1
+    rdinstret a0
+    rdinstreth t0
+    bne     a1, t0, riscv_instret
+    ret

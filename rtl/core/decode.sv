@@ -24,7 +24,7 @@ always_comb begin
     // Calculate the immediate
     case (opcode)
         // Type I
-        7'b0000011, 7'b0010011, 7'b1100111: // LOAD, ALUIMM, JALR
+        7'b0000011, 7'b0010011, 7'b1100111, 7'b1110011: // LOAD, ALUIMM, JALR, SYSTEM
             immediate = {{20{instruction[31]}}, instruction[31:20]};
         // Type S
         7'b0100011: // STORE
@@ -44,6 +44,7 @@ always_comb begin
     endcase
 
     illegal_op = 0;
+    control.instruction_valid = 1;
     // Decode instruction to correct control signals
     case (opcode)
         7'b0110111: begin // LUI
@@ -166,6 +167,23 @@ always_comb begin
                     3'b110: control.alu_op = OR;
                     3'b111: control.alu_op = AND;
                 endcase
+            end else begin
+                illegal_op = 1;
+                control = 0;
+            end
+        end
+        7'b1110011: begin // SYSTEM
+            if (funct3 == 3'b010 && rs1 == 0) begin
+                control.write_reg = 1;
+                control.wb_select = CSR;
+                control.alu_op = IMM;
+                control.alu_select1 = REG1;
+                control.alu_select2 = IMMEDIATE;
+                control.branch_mode = NEVER;
+                control.branch_target = PC_REL;
+                control.mem_write_enable = 0;
+                control.mem_write = 0;
+                control.mem_read = 0;
             end else begin
                 illegal_op = 1;
                 control = 0;

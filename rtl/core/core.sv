@@ -22,6 +22,21 @@ module core (
 );
 
 logic pipe_enable;
+logic [63:0] cycle_counter;
+logic [63:0] instret_counter;
+
+// WB Control is defined up here because it is used for writeback and counters
+control_t wb_control;
+
+always_ff @(posedge clk) begin
+    if (!reset_n) begin
+        cycle_counter <= 0;
+        instret_counter <= 0;
+    end else begin
+        cycle_counter <= cycle_counter + 1;
+        instret_counter <= instret_counter + wb_control.instruction_valid;
+    end
+end
 
 // -----
 // Instruction fetch stage
@@ -85,8 +100,6 @@ logic [31:0] id_rs2_forward_val;
 
 control_t id_control_prelim;
 control_t id_control;
-// WB Control is defined up here because it is used for writeback
-control_t wb_control;
 logic id_hazard;
 
 decode id_decode (
@@ -255,8 +268,21 @@ end
 // Memory stage
 // -----
 logic [31:0] mem_alu_result;
+logic [31:0] mem_csr_result;
 
 control_t mem_control;
+
+always_comb begin
+    case (mem_alu_result[11:0])
+        12'hc00: mem_csr_result = cycle_counter[31:0]; // cycle
+        12'hc01: mem_csr_result = cycle_counter[31:0]; // time
+        12'hc02: mem_csr_result = instret_counter[31:0]; // insret
+        12'hc80: mem_csr_result = cycle_counter[63:32]; // cycleh
+        12'hc81: mem_csr_result = cycle_counter[63:32]; // timeh
+        12'hc82: mem_csr_result = instret_counter[63:32]; // insreth
+        default: mem_csr_result = 0;
+    endcase
+end
 
 // -----
 // Memory / Writeback boundary
@@ -266,10 +292,12 @@ always_ff @(posedge clk) begin
         wb_control <= 0;
         wb_alu_result <= 0;
         wb_read_data <= 0;
+        wb_csr_result <= 0;
     end else if (pipe_enable) begin
         wb_control <= mem_control;
         wb_alu_result <= mem_alu_result;
         wb_read_data <= dmem_read_data;
+        wb_csr_result <= mem_csr_result;
     end
 end
 
@@ -279,6 +307,7 @@ end
 logic [31:0] wb_alu_result;
 logic [31:0] wb_read_data;
 logic [31:0] wb_read_data_extended;
+logic [31:0] wb_csr_result;
 logic [31:0] wb_result;
 
 always_comb begin
@@ -296,6 +325,7 @@ always_comb begin
     case (wb_control.wb_select)
         REG: wb_result = wb_alu_result;
         MEM: wb_result = wb_read_data_extended;
+        CSR: wb_result = wb_csr_result;
     endcase
 end
 
