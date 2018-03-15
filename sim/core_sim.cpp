@@ -66,6 +66,10 @@ int main(int argc, char const *argv[]) {
                     core->dmem_read_data = rom[(dmem_address & 0xffff) >> 2];
                 }
                 // printf("ROM read @ %.8x : %.8x (%d)\n", dmem_address, core->dmem_read_data, dmem_read_mode);
+            } else if (dmem_address >= 0x70000000 && dmem_address <= 0x70000044) {
+                if (dmem_address == 0x70000040) {
+                    core->dmem_read_data = 0; // UART not busy
+                }
             } else {
                 assert(false);
             }
@@ -73,17 +77,17 @@ int main(int argc, char const *argv[]) {
         // Write to RAM
         if (dmem_write_enable) {
             // printf("RAM write @ %.8x : %.8x (%d)\n", dmem_address, dmem_write_data, dmem_write_mode);
-            if (dmem_address == 0x70000000) {
-                printf("LED UPDATE: %d\n", dmem_write_data);
-            } else {
-                assert(dmem_address >= 0x80000000 && dmem_address <= 0x8000ffff);
-
+            if (dmem_address >= 0x80000000 && dmem_address <= 0x8000ffff) {
                 if ((dmem_write_mode & 0b11) == 0) {
                     ((unsigned char *) ram)[dmem_address & 0xffff] = (dmem_write_data & 0xff);
                 } else if ((dmem_write_mode & 0b11) == 1) {
                     ((unsigned short *) ram)[(dmem_address & 0xffff) >> 1] = (dmem_write_data & 0xffff);
                 } else if ((dmem_write_mode & 0b11) == 2) {
                     ram[(dmem_address & 0xffff) >> 2] = dmem_write_data;
+                }
+            } else if (dmem_address >= 0x70000000 && dmem_address <= 0x70000044) {
+                if (dmem_address == 0x70000044) {
+                    printf("%c", dmem_write_data); // UART output
                 }
             }
         }
@@ -114,14 +118,6 @@ int main(int argc, char const *argv[]) {
             printf("ILLEGAL OP! %d\n", i);
             break;
         }
-    }
-
-    unsigned char *buf_o = ((unsigned char *) ram + 0x410);
-    for (int y = 0; y < 32; y++) {
-        for (int x = 0; x < 32; x++) {
-            printf("%.2x", buf_o[x + y * 32]);
-        }
-        printf("\n");
     }
 
     if (trace) {

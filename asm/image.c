@@ -96,8 +96,6 @@ void main(void)
         }
     }
 
-    asm volatile ("ebreak");
-
     unsigned long long cycles = riscv_cycles();
     unsigned long long instret = riscv_instret();
     uart_puthex_64(cycles);
