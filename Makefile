@@ -17,7 +17,7 @@ CORE_TEST_RTL=rtl/core/core.sv rtl/core/alu.sv rtl/core/decode.sv rtl/core/hazar
 CORE_TEST_SRC=sim/core_sim.cpp
 CORE_TEST_ROM=image.rom
 
-.PHONY: test
+.PHONY: test $(ASM_DIR)/$(CORE_TEST_ROM)
 
 all: $(CORE_TEST)
 

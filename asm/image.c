@@ -70,6 +70,7 @@ char buf_o[1024] = {0};
 
 void main(void)
 {
+    int cycles_before = riscv_cycles();
     int a, b, result;
     int max = 255;
 
@@ -99,6 +100,9 @@ void main(void)
     unsigned long long cycles = riscv_cycles();
     unsigned long long instret = riscv_instret();
     uart_puthex_64(cycles);
+    uart_putc('\r');
+    uart_putc('\n');
+    uart_puthex_64(cycles - cycles_before);
     uart_putc('\r');
     uart_putc('\n');
     uart_puthex_64(instret);

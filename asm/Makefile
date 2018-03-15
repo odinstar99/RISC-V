@@ -15,9 +15,9 @@ AS_OPT=-march=rv32i
 LD_OPT=-march=rv32i -m elf32lriscv
 LD_SCRIPT=linker.ld
 
-all: image.rom fib.rom
+all: image.mif fib.mif background.mif align.mif uart.mif
 
-.PRECIOUS: image.elf fib.elf
+.PRECIOUS: %.elf %.rom
 
 %.o: %.c
 	$(GCC) $(GCC_OPT) -c $< -o $@
@@ -35,4 +35,4 @@ all: image.rom fib.rom
 	$(MIFFED) $< $@
 
 clean:
-	rm -f *.o *.elf *.rom
+	rm -f *.o *.elf *.rom *.mif
