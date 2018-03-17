@@ -70,7 +70,8 @@ char buf_o[1024] = {0};
 
 void main(void)
 {
-    int cycles_before = riscv_cycles();
+    unsigned long long cycles_before = riscv_cycles();
+    unsigned long long instret_before = riscv_instret();
     int a, b, result;
     int max = 255;
 
@@ -88,7 +89,11 @@ void main(void)
                           2*(int)buf_i[(a + 1) * WIDTH + b - 1] +
                           5*(int)buf_i[(a + 1) * WIDTH + b    ] +
                          -7*(int)buf_i[(a + 1) * WIDTH + b + 1] +
-                        128) / 13);
+                        128) /* / 13 */);
+            // Div 13 using reciprocal multiplication
+            long long result_long = result;
+            result_long *= 0x4EC4EC4F;
+            result = result_long >> 34;
 
             /* Clipping */
             if(result<0) buf_o[a * WIDTH + b] = 0;
@@ -106,6 +111,9 @@ void main(void)
     uart_putc('\r');
     uart_putc('\n');
     uart_puthex_64(instret);
+    uart_putc('\r');
+    uart_putc('\n');
+    uart_puthex_64(instret - instret_before);
     uart_putc('\r');
     uart_putc('\n');
 

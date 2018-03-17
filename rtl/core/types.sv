@@ -41,10 +41,12 @@ typedef enum bit [0:0] {
     REG_REL
 } branch_target_t;
 
-typedef enum bit [1:0] {
+typedef enum bit [2:0] {
     ALU,
     MEM,
-    CSR
+    CSR,
+    MUL,
+    MULH
 } writeback_t;
 
 typedef enum bit [1:0] {
@@ -68,6 +70,8 @@ typedef struct packed {
     logic [2:0] mem_read;
     logic instruction_valid;
     logic branch_taken;
+    logic mul_signa;
+    logic mul_signb;
 } control_t;
 
 `endif

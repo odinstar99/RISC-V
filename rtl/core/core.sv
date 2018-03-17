@@ -294,9 +294,13 @@ always_ff @(posedge clk) begin
     if (!reset_n) begin
         mem_control <= 0;
         mem_alu_result <= 0;
+        mem_mul_lhs <= 0;
+        mem_mul_rhs <= 0;
     end else if (pipe_enable) begin
         mem_control <= ex_control_branch;
         mem_alu_result <= ex_alu_result;
+        mem_mul_lhs <= ex_rs1;
+        mem_mul_rhs <= ex_rs2;
     end
 end
 
@@ -317,6 +321,10 @@ end
 logic [31:0] mem_alu_result;
 logic [31:0] mem_csr_result;
 
+logic [31:0] mem_mul_lhs;
+logic [31:0] mem_mul_rhs;
+logic [63:0] mem_mul_result;
+
 control_t mem_control;
 
 always_comb begin
@@ -329,6 +337,9 @@ always_comb begin
         12'hc82: mem_csr_result = instret_counter[63:32]; // insreth
         default: mem_csr_result = 0;
     endcase
+
+    mem_mul_result = (mem_control.mul_signa ? $signed(mem_mul_lhs) : $unsigned(mem_mul_lhs)) *
+                     (mem_control.mul_signb ? $signed(mem_mul_rhs) : $unsigned(mem_mul_rhs));
 end
 
 // -----
@@ -340,11 +351,13 @@ always_ff @(posedge clk) begin
         wb_alu_result <= 0;
         wb_read_data <= 0;
         wb_csr_result <= 0;
+        wb_mul_result <= 0;
     end else if (pipe_enable) begin
         wb_control <= mem_control;
         wb_alu_result <= mem_alu_result;
         wb_read_data <= dmem_read_data;
         wb_csr_result <= mem_csr_result;
+        wb_mul_result <= mem_mul_result;
     end
 end
 
@@ -355,6 +368,7 @@ logic [31:0] wb_alu_result;
 logic [31:0] wb_read_data;
 logic [31:0] wb_read_data_extended;
 logic [31:0] wb_csr_result;
+logic [63:0] wb_mul_result;
 logic [31:0] wb_result;
 
 always_comb begin
@@ -373,6 +387,8 @@ always_comb begin
         ALU: wb_result = wb_alu_result;
         MEM: wb_result = wb_read_data_extended;
         CSR: wb_result = wb_csr_result;
+        MUL: wb_result = wb_mul_result[31:0];
+        MULH: wb_result = wb_mul_result[63:32];
     endcase
 end
 

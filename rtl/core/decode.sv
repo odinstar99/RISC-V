@@ -46,6 +46,8 @@ always_comb begin
     illegal_op = 0;
     control.instruction_valid = 1;
     control.branch_taken = 0;
+    control.mul_signa = 0;
+    control.mul_signb = 0;
     // Decode instruction to correct control signals
     case (opcode)
         7'b0110111: begin // LUI
@@ -167,6 +169,25 @@ always_comb begin
                     3'b101: control.alu_op = (instruction[30]) ? SRA : SRL;
                     3'b110: control.alu_op = OR;
                     3'b111: control.alu_op = AND;
+                endcase
+            end else if (opcode == 7'b0110011 && instruction[31:25] == 7'b1) begin
+                control.alu_op = ADD;
+                case (funct3)
+                    3'b000: control.wb_select = MUL;
+                    3'b001: begin
+                        control.wb_select = MULH;
+                        control.mul_signa = 1;
+                        control.mul_signb = 1;
+                    end
+                    3'b010: begin
+                        control.wb_select = MULH;
+                        control.mul_signa = 1;
+                    end
+                    3'b011: control.wb_select = MULH;
+                    default: begin
+                        illegal_op = 1;
+                        control = 0;
+                    end
                 endcase
             end else begin
                 illegal_op = 1;

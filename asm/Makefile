@@ -10,9 +10,9 @@ OBJDUMP=$(CROSS)/bin/riscv-none-embed-objdump
 OBJCOPY=$(CROSS)/bin/riscv-none-embed-objcopy
 READELF=$(CROSS)/bin/riscv-none-embed-readelf
 
-GCC_OPT=-march=rv32i -mabi=ilp32 -O2
-AS_OPT=-march=rv32i
-LD_OPT=-march=rv32i -m elf32lriscv
+GCC_OPT=-march=rv32im -mabi=ilp32 -O2 -mno-div
+AS_OPT=-march=rv32im
+LD_OPT=-march=rv32im -m elf32lriscv
 LD_SCRIPT=linker.ld
 
 all: image.mif fib.mif background.mif align.mif uart.mif
