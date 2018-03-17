@@ -35,6 +35,14 @@ int main(int argc, char const *argv[]) {
     unsigned int dmem_read_mode = 0;
     unsigned int dmem_read_enable = 0;
 
+    unsigned int mmio_config = 0;
+    unsigned int mmio_leds = 0;
+    unsigned int mmio_hex = 0;
+    unsigned int mmio_hex_upper = 0;
+    unsigned int mmio_switch = 0;
+    unsigned int mmio_bg_color = 0;
+    unsigned int mmio_uart_data = 0;
+
     core->reset_n = 0;
     core->clk = 1;
     core->eval();
@@ -67,8 +75,31 @@ int main(int argc, char const *argv[]) {
                 }
                 // printf("ROM read @ %.8x : %.8x (%d)\n", dmem_address, core->dmem_read_data, dmem_read_mode);
             } else if (dmem_address >= 0x70000000 && dmem_address <= 0x70000044) {
-                if (dmem_address == 0x70000040) {
-                    core->dmem_read_data = 0; // UART not busy
+                switch (dmem_address) {
+                    case 0x70000000: // config
+                        core->dmem_read_data = mmio_config & 0x01;
+                        break;
+                    case 0x70000004: // leds
+                        core->dmem_read_data = mmio_leds & 0x3ff;
+                        break;
+                    case 0x70000008: // hex 0-3
+                        core->dmem_read_data = mmio_hex;
+                        break;
+                    case 0x7000000c: // hex 4-5
+                        core->dmem_read_data = mmio_hex_upper & 0xffff;
+                        break;
+                    case 0x70000010: // switch state
+                        core->dmem_read_data = mmio_switch & 0x3ff;
+                        break;
+                    case 0x70000014: // bg color
+                        core->dmem_read_data = mmio_bg_color & 0xfff;
+                        break;
+                    case 0x70000040: // uart status
+                        core->dmem_read_data = 0; // uart not busy
+                        break;
+                    case 0x70000044: // uart data
+                        core->dmem_read_data = mmio_uart_data & 0xff;
+                        break;
                 }
             } else {
                 assert(false);
@@ -86,8 +117,30 @@ int main(int argc, char const *argv[]) {
                     ram[(dmem_address & 0xffff) >> 2] = dmem_write_data;
                 }
             } else if (dmem_address >= 0x70000000 && dmem_address <= 0x70000044) {
-                if (dmem_address == 0x70000044) {
-                    printf("%c", dmem_write_data); // UART output
+                switch (dmem_address) {
+                    case 0x70000000: // config
+                        mmio_config = dmem_write_data & 0x01;
+                        break;
+                    case 0x70000004: // leds
+                        mmio_leds = dmem_write_data & 0x3ff;
+                        break;
+                    case 0x70000008: // hex 0-3
+                        mmio_leds = dmem_write_data;
+                        break;
+                    case 0x7000000c: // hex 4-5
+                        mmio_hex_upper = dmem_write_data & 0xffff;
+                        break;
+                    case 0x70000010: // switch state
+                        break;
+                    case 0x70000014: // bg color
+                        mmio_bg_color = dmem_write_data & 0xfff;
+                        break;
+                    case 0x70000040: // uart status
+                        break;
+                    case 0x70000044: // uart data
+                        mmio_uart_data = dmem_write_data & 0xff;
+                        printf("%c", mmio_uart_data);
+                        break;
                 }
             }
         }
