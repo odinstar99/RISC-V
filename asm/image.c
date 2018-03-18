@@ -89,11 +89,11 @@ void main(void)
                           2*(int)buf_i[(a + 1) * WIDTH + b - 1] +
                           5*(int)buf_i[(a + 1) * WIDTH + b    ] +
                          -7*(int)buf_i[(a + 1) * WIDTH + b + 1] +
-                        128) /* / 13 */);
+                        128) / 13);
             // Div 13 using reciprocal multiplication
-            long long result_long = result;
-            result_long *= 0x4EC4EC4F;
-            result = result_long >> 34;
+            // long long result_long = result;
+            // result_long *= 0x4EC4EC4F;
+            // result = result_long >> 34;
 
             /* Clipping */
             if(result<0) buf_o[a * WIDTH + b] = 0;

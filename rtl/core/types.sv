@@ -46,7 +46,9 @@ typedef enum bit [2:0] {
     MEM,
     CSR,
     MUL,
-    MULH
+    MULH,
+    DIV,
+    REM
 } writeback_t;
 
 typedef enum bit [1:0] {
@@ -72,6 +74,7 @@ typedef struct packed {
     logic branch_taken;
     logic mul_signa;
     logic mul_signb;
+    logic div_sign;
 } control_t;
 
 `endif

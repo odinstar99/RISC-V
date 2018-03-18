@@ -162,6 +162,7 @@ hazard id_hazard_unit (
     .wb_control(wb_control),
     .imem_wait(imem_wait),
     .dmem_wait(dmem_wait),
+    .div_wait(div_wait),
     .instruction_valid(id_instruction_valid),
     .hazard(id_hazard),
     .pc_pc_write_enable(pc_pc_write_enable),
@@ -327,6 +328,22 @@ logic [63:0] mem_mul_result;
 
 control_t mem_control;
 
+logic div_wait;
+logic [31:0] mem_div_quotient;
+logic [31:0] mem_div_remainder;
+
+divider mem_div (
+    .clk(clk),
+    .reset_n(reset_n),
+    .start((ex_control.wb_select == DIV || ex_control.wb_select == REM) && pipe_enable),
+    .sign(ex_control.div_sign),
+    .divisor_input(ex_rs2),
+    .divident_input(ex_rs1),
+    .quotient_output(mem_div_quotient),
+    .remainder_output(mem_div_remainder),
+    .busy(div_wait)
+);
+
 always_comb begin
     case (mem_alu_result[11:0])
         12'hc00: mem_csr_result = cycle_counter[31:0]; // cycle
@@ -352,12 +369,16 @@ always_ff @(posedge clk) begin
         wb_read_data <= 0;
         wb_csr_result <= 0;
         wb_mul_result <= 0;
+        wb_div_quotient <= 0;
+        wb_div_remainder <= 0;
     end else if (pipe_enable) begin
         wb_control <= mem_control;
         wb_alu_result <= mem_alu_result;
         wb_read_data <= dmem_read_data;
         wb_csr_result <= mem_csr_result;
         wb_mul_result <= mem_mul_result;
+        wb_div_quotient <= mem_div_quotient;
+        wb_div_remainder <= mem_div_remainder;
     end
 end
 
@@ -369,6 +390,8 @@ logic [31:0] wb_read_data;
 logic [31:0] wb_read_data_extended;
 logic [31:0] wb_csr_result;
 logic [63:0] wb_mul_result;
+logic [31:0] wb_div_quotient;
+logic [31:0] wb_div_remainder;
 logic [31:0] wb_result;
 
 always_comb begin
@@ -389,6 +412,8 @@ always_comb begin
         CSR: wb_result = wb_csr_result;
         MUL: wb_result = wb_mul_result[31:0];
         MULH: wb_result = wb_mul_result[63:32];
+        DIV: wb_result = wb_div_quotient;
+        REM: wb_result = wb_div_remainder;
     endcase
 end
 

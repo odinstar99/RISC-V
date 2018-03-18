@@ -10,6 +10,7 @@ module hazard (
     input control_t wb_control,
     input imem_wait,
     input dmem_wait,
+    input div_wait,
     input instruction_valid,
     output hazard,
     output pc_pc_write_enable,
@@ -29,7 +30,7 @@ always_comb begin
     forward_rs1 = DECODE;
     forward_rs2 = DECODE;
 
-    if (imem_wait || dmem_wait) begin
+    if (imem_wait || dmem_wait || div_wait) begin
         pipe_enable = 0;
     end
 

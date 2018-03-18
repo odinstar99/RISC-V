@@ -48,6 +48,7 @@ always_comb begin
     control.branch_taken = 0;
     control.mul_signa = 0;
     control.mul_signb = 0;
+    control.div_sign = 0;
     // Decode instruction to correct control signals
     case (opcode)
         7'b0110111: begin // LUI
@@ -184,10 +185,16 @@ always_comb begin
                         control.mul_signa = 1;
                     end
                     3'b011: control.wb_select = MULH;
-                    default: begin
-                        illegal_op = 1;
-                        control = 0;
+                    3'b100: begin
+                        control.wb_select = DIV;
+                        control.div_sign = 1;
                     end
+                    3'b101: control.wb_select = DIV;
+                    3'b110: begin
+                        control.wb_select = REM;
+                        control.div_sign = 1;
+                    end
+                    3'b111: control.wb_select = REM;
                 endcase
             end else begin
                 illegal_op = 1;
