@@ -15,10 +15,8 @@ int main(int argc, char const *argv[]) {
     top->trace(tfp, 99);
     tfp->open("trace_div.vcd");
 
-    // int divisor = (rand() % 2 ? -(rand() % 65536) : (rand() % 65536));
-    // int divident = (rand() % 2 ? -rand() : rand());
-    int divisor = -1;
-    int divident = -0x80000000;
+    int divisor = (rand() % 2 ? -(rand() % 65536) : (rand() % 65536));
+    int divident = (rand() % 2 ? -rand() : rand());
 
     unsigned int start = 1;
 
