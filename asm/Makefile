@@ -1,7 +1,7 @@
-CROSS=/Users/michiel/cross/riscv
+CROSS=$(HOME)/cross/riscv
 
 LIBGCC=$(CROSS)/lib/gcc/riscv-none-embed/7.2.0/rv32i/ilp32/libgcc.a
-MIFFED=/Users/michiel/Development/Rust/miffed/target/release/miffed
+MIFFED=$(HOME)/Development/Rust/miffed/target/release/miffed
 
 AS=$(CROSS)/bin/riscv-none-embed-as
 GCC=$(CROSS)/bin/riscv-none-embed-gcc
