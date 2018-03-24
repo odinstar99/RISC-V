@@ -29,9 +29,9 @@ start:
     j       copy_data_loop_end
 copy_data_loop:
     lw      t3, 0(t0)
-    sw      t3, 0(t2)
     addi    t0, t0, 4
     addi    t2, t2, 4
+    sw      t3, -4(t2)
 copy_data_loop_end:
     bltu    t0, t1, copy_data_loop
 
