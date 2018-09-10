@@ -15,6 +15,10 @@ void uart_putc(char c) {
     *LEDS += 1;
 }
 
+void uart_puts(char *str) {
+    while (*str) uart_putc(*str++);
+}
+
 char lookup[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 void uart_puthex(char c) {
     uart_putc(lookup[(c >> 4) & 0xf]);
@@ -30,6 +34,18 @@ void uart_puthex_64(unsigned long long x) {
     uart_puthex((x & 0x0000000000ff0000) >> 16);
     uart_puthex((x & 0x000000000000ff00) >>  8);
     uart_puthex((x & 0x00000000000000ff) >>  0);
+}
+
+void uart_putdec_64(unsigned long long x) {
+    char str[24] = {0};
+    char *c = &str[23];
+    unsigned long long value = x;
+    while (value != 0) {
+        c--;
+        *c = lookup[value % 10];
+        value /= 10;
+    }
+    uart_puts(c);
 }
 
 char buf_i[1024] = {
@@ -96,32 +112,40 @@ void main(void)
             // result = result_long >> 34;
 
             /* Clipping */
-            if(result<0) buf_o[a * WIDTH + b] = 0;
-            else if (result > 255) buf_o[a * WIDTH + b] = (char)255;
-            else buf_o[a * WIDTH + b] = result;
+            int clip_result = result;
+            if (result < 0) clip_result = 0;
+            if (result > max) clip_result = max;
+            buf_o[a * WIDTH + b] = clip_result;
         }
     }
 
     unsigned long long cycles = riscv_cycles();
     unsigned long long instret = riscv_instret();
-    uart_puthex_64(cycles);
-    uart_putc('\r');
-    uart_putc('\n');
-    uart_puthex_64(cycles - cycles_before);
-    uart_putc('\r');
-    uart_putc('\n');
-    uart_puthex_64(instret);
-    uart_putc('\r');
-    uart_putc('\n');
-    uart_puthex_64(instret - instret_before);
-    uart_putc('\r');
-    uart_putc('\n');
+    uart_puts("Calculations:\r\ncycles (totl): ");
+    uart_putdec_64(cycles);
+    uart_puts("\r\ncycles (diff): ");
+    uart_putdec_64(cycles - cycles_before);
+    uart_puts("\r\ninsret (totl): ");
+    uart_putdec_64(instret);
+    uart_puts("\r\ninsret (diff): ");
+    uart_putdec_64(instret - instret_before);
+    uart_puts("\r\n");
+    unsigned long long cycles_after = riscv_cycles();
+    unsigned long long instret_after = riscv_instret();
+    uart_puts("Printing:\r\ncycles (totl): ");
+    uart_putdec_64(cycles_after);
+    uart_puts("\r\ncycles (diff): ");
+    uart_putdec_64(cycles_after - cycles);
+    uart_puts("\r\ninsret (totl): ");
+    uart_putdec_64(instret_after);
+    uart_puts("\r\ninsret (diff): ");
+    uart_putdec_64(instret_after - instret);
+    uart_puts("\r\n");
 
     for (a = 0; a < HEIGHT; a++) {
         for (b = 0; b < WIDTH; b++) {
             uart_puthex(buf_o[a * WIDTH + b]);
         }
-        uart_putc('\r');
-        uart_putc('\n');
+        uart_puts("\r\n");
     }
 }

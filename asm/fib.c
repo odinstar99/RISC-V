@@ -34,7 +34,7 @@ static char *some_string = "Hello world!";
 #define SWITCH ((volatile unsigned int *) 0x70000010)
 
 void main() {
-    *CONFIG |= 1; // Enable leds
+    *CONFIG |= 3; // Enable leds and hex
 
     unsigned int n = 5;
     unsigned int recursive_result = fib(n);
