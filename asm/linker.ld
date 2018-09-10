@@ -19,6 +19,7 @@ SECTIONS
 
     .rodata : {
         *(.rodata*)
+        *(.srodata*)
     } >ROM
 
     __data_start = .;
@@ -43,4 +44,10 @@ SECTIONS
         *(COMMON)
     } >RAM
     __bss_end = .;
+
+    /DISCARD/ :
+    {
+        *(.eh_frame)
+    }
 }
+

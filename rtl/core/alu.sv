@@ -25,7 +25,6 @@ always_comb begin
         GEU: result = (lhs >= rhs) ? 1 : 0;
         IMM: result = rhs;
         PC4: result = lhs + 4;
-        default: result = 0;
     endcase
 end
 

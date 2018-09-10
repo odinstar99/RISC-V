@@ -35,7 +35,7 @@ always_ff @(posedge clk) begin
     end else begin
         cycle_counter <= cycle_counter + 1;
         if (pipe_enable) begin
-            instret_counter <= instret_counter + wb_control.instruction_valid;
+            instret_counter <= instret_counter + {63'b0, wb_control.instruction_valid};
         end
     end
 end
@@ -414,6 +414,7 @@ always_comb begin
         MULH: wb_result = wb_mul_result[63:32];
         DIV: wb_result = wb_div_quotient;
         REM: wb_result = wb_div_remainder;
+        default: wb_result = 0;
     endcase
 end
 
