@@ -4,3 +4,4 @@ asm/*.elf
 asm/*.rom
 asm/*.mif
 *.vcd
+quartus/*.qws
