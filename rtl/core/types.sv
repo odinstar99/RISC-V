@@ -1,6 +1,6 @@
 `ifndef TYPES_SV
 `define TYPES_SV
-
+package TYPES;
 typedef enum bit [3:0] {
     ADD,
     SUB,
@@ -77,4 +77,5 @@ typedef struct packed {
     logic div_sign;
 } control_t;
 
+endpackage : TYPES
 `endif

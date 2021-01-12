@@ -14,16 +14,16 @@ module regfile (
 
 logic [31:0] regs[0:31];
 
-initial begin
-    for (int i = 0; i < 32; i++) begin
-        regs[i] = 32'h0;
-    end
-end
+ generate
+	  genvar i;
+	  for (i = 0; i < 32; i = i+1) begin: generate_regs_block
+			initial
+				 regs[i] <= 0;
+	  end
+ endgenerate
 
-always_comb begin
-    output_reg1 = regs[address_reg1];
-    output_reg2 = regs[address_reg2];
-end
+assign output_reg1 = regs[address_reg1];
+assign output_reg2 = regs[address_reg2];
 
 always_ff @(posedge clk) begin
     if (!reset_n) begin

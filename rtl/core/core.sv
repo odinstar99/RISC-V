@@ -1,23 +1,27 @@
-`include "types.sv"
+//`include "types.sv"
+
+import TYPES::*;
+//import TYPES::control_t;
 
 module core (
     input clk,
     input reset_n,
-    output illegal_op,
+    output logic illegal_op,
 
-    output [31:0] imem_address,
-    output imem_enable,
+    output logic [31:0] imem_address,
+    output logic imem_enable,
     input [31:0] imem_data,
     input imem_wait,
 
-    output [31:0] dmem_address,
-    output dmem_enable,
-    output [31:0] dmem_write_data,
+    output logic [31:0] dmem_address,
+    output logic dmem_enable,
+    output logic [31:0] dmem_write_data,
     input [31:0] dmem_read_data,
-    output dmem_write_enable,
-    output [2:0] dmem_write_mode,
-    output dmem_read_enable,
-    output [2:0] dmem_read_mode,
+    output logic dmem_write_enable,
+    output logic [2:0] dmem_write_mode,
+    output logic dmem_read_enable,
+    output logic [2:0] dmem_read_mode,
+	 output logic [63:0] cycle_count,
     input dmem_wait
 );
 
@@ -25,102 +29,35 @@ logic pipe_enable;
 logic [63:0] cycle_counter;
 logic [63:0] instret_counter;
 
-// WB Control is defined up here because it is used for writeback and counters
-control_t wb_control;
+assign cycle_count = cycle_counter;
+// -----
+// Instruction fetch / Instruction decode boundary
+// -----
+logic ifid_instruction_write_enable;
 
-always_ff @(posedge clk) begin
-    if (!reset_n) begin
-        cycle_counter <= 0;
-        instret_counter <= 0;
-    end else begin
-        cycle_counter <= cycle_counter + 1;
-        if (pipe_enable) begin
-            instret_counter <= instret_counter + {63'b0, wb_control.instruction_valid};
-        end
-    end
-end
-
+// -----
+// Writeback stage
+// -----
+logic [31:0] wb_alu_result;
+logic [31:0] wb_read_data;
+logic [31:0] wb_read_data_extended;
+logic [31:0] wb_csr_result;
+logic [63:0] wb_mul_result;
+logic [31:0] wb_div_quotient;
+logic [31:0] wb_div_remainder;
+logic [31:0] wb_result;
 // -----
 // Program counter generation stage
 // -----
 logic [31:0] pc_pc;
 logic [31:0] pc_new_pc;
 logic pc_pc_write_enable;
-
-always_ff @(posedge clk) begin
-    if (!reset_n) begin
-        pc_pc <= 32'h10;
-    end else if (pc_pc_write_enable && pipe_enable) begin
-        pc_pc <= pc_new_pc;
-    end
-end
-
-always_comb begin
-    // Select the new PC based on if we are branching
-    if (ex_should_branch) begin
-        pc_new_pc = ex_branch;
-    end else begin
-        pc_new_pc = pc_pc;
-    end
-    pc_new_pc = pc_new_pc + 4;
-end
-
 // -----
 // Instruction fetch stage
 // -----
 logic [31:0] if_pc;
 logic if_pc_write_enable;
 logic if_valid;
-
-always_ff @(posedge clk) begin
-    if (!reset_n) begin
-        if_pc <= 0;
-    end else if (if_pc_write_enable && pipe_enable) begin
-        if (ex_should_branch) begin
-            if_pc <= ex_branch;
-        end else begin
-            if_pc <= pc_pc;
-        end
-    end
-
-    if (!reset_n) begin
-        if_valid <= 0;
-    end else begin
-        if_valid <= 1;
-    end
-end
-
-always_comb begin
-    // The requested ROM address is the new PC, the ROM has a buffered input
-    if (ex_should_branch) begin
-        imem_address = ex_branch;
-    end else begin
-        imem_address = pc_pc;
-    end
-    imem_enable = if_pc_write_enable && pipe_enable;
-end
-
-// -----
-// Instruction fetch / Instruction decode boundary
-// -----
-logic ifid_instruction_write_enable;
-
-always_ff @(posedge clk) begin
-    if (!reset_n) begin
-        id_instruction <= 0;
-        id_pc <= 0;
-    end else if (ifid_instruction_write_enable && pipe_enable) begin
-        id_instruction <= imem_data;
-        id_pc <= if_pc;
-    end
-
-    if (!reset_n) begin
-        id_instruction_valid <= 0;
-    end else begin
-        id_instruction_valid <= if_valid;
-    end
-end
-
 // -----
 // Instruction decode stage
 // -----
@@ -142,6 +79,42 @@ logic [31:0] id_rs2_forward_val;
 control_t id_control_prelim;
 control_t id_control;
 logic id_hazard;
+// -----
+// Execute stage
+// -----
+logic [31:0] ex_rs1;
+logic [31:0] ex_rs2;
+logic [31:0] ex_pc;
+logic [31:0] ex_immediate;
+
+logic [31:0] ex_alu_lhs;
+logic [31:0] ex_alu_rhs;
+logic [31:0] ex_alu_result;
+
+logic [31:0] ex_branch_partial;
+logic [31:0] ex_branch;
+logic ex_should_branch;
+
+control_t ex_control;
+control_t ex_control_branch;
+// -----
+// Memory stage
+// -----
+logic [31:0] mem_alu_result;
+logic [31:0] mem_csr_result;
+
+logic [31:0] mem_mul_lhs;
+logic [31:0] mem_mul_rhs;
+logic [63:0] mem_mul_result;
+
+control_t mem_control;
+
+logic div_wait;
+logic [31:0] mem_div_quotient;
+logic [31:0] mem_div_remainder;
+
+// WB Control is defined up here because it is used for writeback and counters
+control_t wb_control;
 
 decode id_decode (
     .instruction(id_instruction),
@@ -184,6 +157,99 @@ regfile id_regfile (
     .data_dest(wb_result),
     .write_dest(wb_control.write_reg)
 );
+alu ex_alu (
+    .operation(ex_control.alu_op),
+    .lhs(ex_alu_lhs),
+    .rhs(ex_alu_rhs),
+    .result(ex_alu_result)
+);
+divider mem_div (
+    .clk(clk),
+    .reset_n(reset_n),
+    .start((ex_control.wb_select == DIV || ex_control.wb_select == REM) && pipe_enable),
+    .sign(ex_control.div_sign),
+    .divisor_input(ex_rs2),
+    .divident_input(ex_rs1),
+    .quotient_output(mem_div_quotient),
+    .remainder_output(mem_div_remainder),
+    .busy(div_wait)
+);
+
+always_ff @(posedge clk) begin
+    if (!reset_n) begin
+        cycle_counter <= 0;
+        instret_counter <= 0;
+    end else begin
+        cycle_counter <= cycle_counter + 1;
+        if (pipe_enable) begin
+            instret_counter <= instret_counter + {63'b0, wb_control.instruction_valid};
+        end
+    end
+end
+
+
+always_ff @(posedge clk) begin
+    if (!reset_n) begin
+        pc_pc <= 32'h10;
+    end else if (pc_pc_write_enable && pipe_enable) begin
+        pc_pc <= pc_new_pc;
+    end
+end
+
+always_comb begin
+    // Select the new PC based on if we are branching
+    if (ex_should_branch) begin
+        pc_new_pc = ex_branch;
+    end else begin
+        pc_new_pc = pc_pc;
+    end
+    pc_new_pc = pc_new_pc + 4;
+end
+
+
+always_ff @(posedge clk) begin
+    if (!reset_n) begin
+        if_pc <= 0;
+    end else if (if_pc_write_enable && pipe_enable) begin
+        if (ex_should_branch) begin
+            if_pc <= ex_branch;
+        end else begin
+            if_pc <= pc_pc;
+        end
+    end
+
+    if (!reset_n) begin
+        if_valid <= 0;
+    end else begin
+        if_valid <= 1;
+    end
+end
+
+always_comb begin
+    // The requested ROM address is the new PC, the ROM has a buffered input
+    if (ex_should_branch) begin
+        imem_address = ex_branch;
+    end else begin
+        imem_address = pc_pc;
+    end
+    imem_enable = if_pc_write_enable && pipe_enable;
+end
+
+always_ff @(posedge clk) begin
+    if (!reset_n) begin
+        id_instruction <= 0;
+        id_pc <= 0;
+    end else if (ifid_instruction_write_enable && pipe_enable) begin
+        id_instruction <= imem_data;
+        id_pc <= if_pc;
+    end
+
+    if (!reset_n) begin
+        id_instruction_valid <= 0;
+    end else begin
+        id_instruction_valid <= if_valid;
+    end
+end
 
 always_comb begin
     if (id_hazard || illegal_op || !id_instruction_valid) begin
@@ -227,32 +293,6 @@ always_ff @(posedge clk) begin
         ex_immediate <= id_immediate;
     end
 end
-
-// -----
-// Execute stage
-// -----
-logic [31:0] ex_rs1;
-logic [31:0] ex_rs2;
-logic [31:0] ex_pc;
-logic [31:0] ex_immediate;
-
-logic [31:0] ex_alu_lhs;
-logic [31:0] ex_alu_rhs;
-logic [31:0] ex_alu_result;
-
-logic [31:0] ex_branch_partial;
-logic [31:0] ex_branch;
-logic ex_should_branch;
-
-control_t ex_control;
-control_t ex_control_branch;
-
-alu ex_alu (
-    .operation(ex_control.alu_op),
-    .lhs(ex_alu_lhs),
-    .rhs(ex_alu_rhs),
-    .result(ex_alu_result)
-);
 
 always_comb begin
     // Select the ALU lhs
@@ -316,34 +356,6 @@ always_comb begin
     dmem_write_enable = ex_control.mem_write_enable;
 end
 
-// -----
-// Memory stage
-// -----
-logic [31:0] mem_alu_result;
-logic [31:0] mem_csr_result;
-
-logic [31:0] mem_mul_lhs;
-logic [31:0] mem_mul_rhs;
-logic [63:0] mem_mul_result;
-
-control_t mem_control;
-
-logic div_wait;
-logic [31:0] mem_div_quotient;
-logic [31:0] mem_div_remainder;
-
-divider mem_div (
-    .clk(clk),
-    .reset_n(reset_n),
-    .start((ex_control.wb_select == DIV || ex_control.wb_select == REM) && pipe_enable),
-    .sign(ex_control.div_sign),
-    .divisor_input(ex_rs2),
-    .divident_input(ex_rs1),
-    .quotient_output(mem_div_quotient),
-    .remainder_output(mem_div_remainder),
-    .busy(div_wait)
-);
-
 always_comb begin
     case (mem_alu_result[11:0])
         12'hc00: mem_csr_result = cycle_counter[31:0]; // cycle
@@ -382,17 +394,6 @@ always_ff @(posedge clk) begin
     end
 end
 
-// -----
-// Writeback stage
-// -----
-logic [31:0] wb_alu_result;
-logic [31:0] wb_read_data;
-logic [31:0] wb_read_data_extended;
-logic [31:0] wb_csr_result;
-logic [63:0] wb_mul_result;
-logic [31:0] wb_div_quotient;
-logic [31:0] wb_div_remainder;
-logic [31:0] wb_result;
 
 always_comb begin
     // Sign extend the read memory value

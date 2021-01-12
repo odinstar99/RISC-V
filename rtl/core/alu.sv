@@ -1,10 +1,12 @@
-`include "types.sv"
+//`include "types.sv"
+
+import TYPES::*;
 
 module alu (
     input alu_operation_t operation,
     input [31:0] lhs,
     input [31:0] rhs,
-    output [31:0] result
+    output logic [31:0] result
 );
 
 always_comb begin
