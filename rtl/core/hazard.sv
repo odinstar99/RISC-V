@@ -1,5 +1,7 @@
 `include "types.sv"
 
+import TYPES::*;
+
 module hazard (
     input control_t id_control,
     input [4:0] rs1,
@@ -12,11 +14,11 @@ module hazard (
     input dmem_wait,
     input div_wait,
     input instruction_valid,
-    output hazard,
-    output pc_pc_write_enable,
-    output if_pc_write_enable,
-    output ifid_instruction_write_enable,
-    output pipe_enable,
+    output logic hazard,
+    output logic pc_pc_write_enable,
+    output logic if_pc_write_enable,
+    output logic ifid_instruction_write_enable,
+    output logic pipe_enable,
     output forward_t forward_rs1,
     output forward_t forward_rs2
 );

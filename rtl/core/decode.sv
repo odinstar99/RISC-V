@@ -1,13 +1,15 @@
 `include "types.sv"
+import TYPES::*;
+//import TYPES::alu_operation_t;
 
 module decode (
     input [31:0] instruction,
 
-    output [4:0] rs1,
-    output [4:0] rs2,
-    output [31:0] immediate,
+    output logic [4:0] rs1,
+    output logic [4:0] rs2,
+    output logic [31:0] immediate,
 
-    output illegal_op,
+    output logic illegal_op,
     output control_t control
 );
 

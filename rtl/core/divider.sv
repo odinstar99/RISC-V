@@ -8,11 +8,11 @@ module divider (
     input reset_n,
     input start,
     input sign,
-    input [31:0] divisor_input,
-    input [31:0] divident_input,
-    output [31:0] quotient_output,
-    output [31:0] remainder_output,
-    output busy
+    input logic [31:0] divisor_input,
+    input logic [31:0] divident_input,
+    output logic [31:0] quotient_output,
+    output logic [31:0] remainder_output,
+    output logic busy
 );
 
 divider_state_t state;
