@@ -43,11 +43,11 @@ module i_DM_cache (
 	wren,
 	q);
 
-	input	[5:0]  address;
+	input	[6:0]  address;
 	input	  clock;
-	input	[127:0]  data;
+	input	[511:0]  data;
 	input	  wren;
-	output	[127:0]  q;
+	output	[511:0]  q;
 `ifndef ALTERA_RESERVED_QIS
 // synopsys translate_off
 `endif
@@ -56,8 +56,8 @@ module i_DM_cache (
 // synopsys translate_on
 `endif
 
-	wire [127:0] sub_wire0;
-	wire [127:0] q = sub_wire0[127:0];
+	wire [511:0] sub_wire0;
+	wire [511:0] q = sub_wire0[511:0];
 
 	altsyncram	altsyncram_component (
 				.address_a (address),
@@ -89,14 +89,15 @@ module i_DM_cache (
 		altsyncram_component.intended_device_family = "Cyclone IV E",
 		altsyncram_component.lpm_hint = "ENABLE_RUNTIME_MOD=NO",
 		altsyncram_component.lpm_type = "altsyncram",
-		altsyncram_component.numwords_a = 64,
+		altsyncram_component.numwords_a = 128,
 		altsyncram_component.operation_mode = "SINGLE_PORT",
 		altsyncram_component.outdata_aclr_a = "NONE",
 		altsyncram_component.outdata_reg_a = "UNREGISTERED",
 		altsyncram_component.power_up_uninitialized = "FALSE",
+		altsyncram_component.ram_block_type = "M9K",
 		altsyncram_component.read_during_write_mode_port_a = "NEW_DATA_NO_NBE_READ",
-		altsyncram_component.widthad_a = 6,
-		altsyncram_component.width_a = 128,
+		altsyncram_component.widthad_a = 7,
+		altsyncram_component.width_a = 512,
 		altsyncram_component.width_byteena_a = 1;
 
 
@@ -125,8 +126,8 @@ endmodule
 // Retrieval info: PRIVATE: JTAG_ID STRING "NONE"
 // Retrieval info: PRIVATE: MAXIMUM_DEPTH NUMERIC "0"
 // Retrieval info: PRIVATE: MIFfilename STRING ""
-// Retrieval info: PRIVATE: NUMWORDS_A NUMERIC "64"
-// Retrieval info: PRIVATE: RAM_BLOCK_TYPE NUMERIC "0"
+// Retrieval info: PRIVATE: NUMWORDS_A NUMERIC "128"
+// Retrieval info: PRIVATE: RAM_BLOCK_TYPE NUMERIC "2"
 // Retrieval info: PRIVATE: READ_DURING_WRITE_MODE_PORT_A NUMERIC "3"
 // Retrieval info: PRIVATE: RegAddr NUMERIC "1"
 // Retrieval info: PRIVATE: RegData NUMERIC "1"
@@ -135,8 +136,8 @@ endmodule
 // Retrieval info: PRIVATE: SingleClock NUMERIC "1"
 // Retrieval info: PRIVATE: UseDQRAM NUMERIC "1"
 // Retrieval info: PRIVATE: WRCONTROL_ACLR_A NUMERIC "0"
-// Retrieval info: PRIVATE: WidthAddr NUMERIC "6"
-// Retrieval info: PRIVATE: WidthData NUMERIC "128"
+// Retrieval info: PRIVATE: WidthAddr NUMERIC "7"
+// Retrieval info: PRIVATE: WidthData NUMERIC "512"
 // Retrieval info: PRIVATE: rden NUMERIC "0"
 // Retrieval info: LIBRARY: altera_mf altera_mf.altera_mf_components.all
 // Retrieval info: CONSTANT: CLOCK_ENABLE_INPUT_A STRING "BYPASS"
@@ -144,29 +145,30 @@ endmodule
 // Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone IV E"
 // Retrieval info: CONSTANT: LPM_HINT STRING "ENABLE_RUNTIME_MOD=NO"
 // Retrieval info: CONSTANT: LPM_TYPE STRING "altsyncram"
-// Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "64"
+// Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "128"
 // Retrieval info: CONSTANT: OPERATION_MODE STRING "SINGLE_PORT"
 // Retrieval info: CONSTANT: OUTDATA_ACLR_A STRING "NONE"
 // Retrieval info: CONSTANT: OUTDATA_REG_A STRING "UNREGISTERED"
 // Retrieval info: CONSTANT: POWER_UP_UNINITIALIZED STRING "FALSE"
+// Retrieval info: CONSTANT: RAM_BLOCK_TYPE STRING "M9K"
 // Retrieval info: CONSTANT: READ_DURING_WRITE_MODE_PORT_A STRING "NEW_DATA_NO_NBE_READ"
-// Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "6"
-// Retrieval info: CONSTANT: WIDTH_A NUMERIC "128"
+// Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "7"
+// Retrieval info: CONSTANT: WIDTH_A NUMERIC "512"
 // Retrieval info: CONSTANT: WIDTH_BYTEENA_A NUMERIC "1"
-// Retrieval info: USED_PORT: address 0 0 6 0 INPUT NODEFVAL "address[5..0]"
+// Retrieval info: USED_PORT: address 0 0 7 0 INPUT NODEFVAL "address[6..0]"
 // Retrieval info: USED_PORT: clock 0 0 0 0 INPUT VCC "clock"
-// Retrieval info: USED_PORT: data 0 0 128 0 INPUT NODEFVAL "data[127..0]"
-// Retrieval info: USED_PORT: q 0 0 128 0 OUTPUT NODEFVAL "q[127..0]"
+// Retrieval info: USED_PORT: data 0 0 512 0 INPUT NODEFVAL "data[511..0]"
+// Retrieval info: USED_PORT: q 0 0 512 0 OUTPUT NODEFVAL "q[511..0]"
 // Retrieval info: USED_PORT: wren 0 0 0 0 INPUT NODEFVAL "wren"
-// Retrieval info: CONNECT: @address_a 0 0 6 0 address 0 0 6 0
+// Retrieval info: CONNECT: @address_a 0 0 7 0 address 0 0 7 0
 // Retrieval info: CONNECT: @clock0 0 0 0 0 clock 0 0 0 0
-// Retrieval info: CONNECT: @data_a 0 0 128 0 data 0 0 128 0
+// Retrieval info: CONNECT: @data_a 0 0 512 0 data 0 0 512 0
 // Retrieval info: CONNECT: @wren_a 0 0 0 0 wren 0 0 0 0
-// Retrieval info: CONNECT: q 0 0 128 0 @q_a 0 0 128 0
+// Retrieval info: CONNECT: q 0 0 512 0 @q_a 0 0 512 0
 // Retrieval info: GEN_FILE: TYPE_NORMAL i_DM_cache.v TRUE
 // Retrieval info: GEN_FILE: TYPE_NORMAL i_DM_cache.inc FALSE
 // Retrieval info: GEN_FILE: TYPE_NORMAL i_DM_cache.cmp FALSE
 // Retrieval info: GEN_FILE: TYPE_NORMAL i_DM_cache.bsf FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL i_DM_cache_inst.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL i_DM_cache_inst.v TRUE
 // Retrieval info: GEN_FILE: TYPE_NORMAL i_DM_cache_bb.v TRUE
 // Retrieval info: LIB_FILE: altera_mf
