@@ -1,5 +1,3 @@
-
-
 module W4_FA_cache_logic_m
 #(parameter I_BURST=5'd16, I_CACHE_LENGTH=I_BURST*32)
 (
@@ -17,9 +15,9 @@ module W4_FA_cache_logic_m
 	output logic [31:0] av_address,
 	output logic av_read,
 	output logic av_write,
-	input  logic av_wait_data,
-	input  logic [I_CACHE_LENGTH - 1:0] av_reddata,
-	output logic [I_CACHE_LENGTH - 1:0] av_writedata,
+	input  logic av_read_data_valid,
+	input  logic [31:0] av_reddata,
+	output logic [31:0] av_writedata,
 	input  logic write_ready_n,
 	output logic [4:0] av_burstcount 
 	//---------------//
@@ -28,6 +26,7 @@ module W4_FA_cache_logic_m
 
 logic [63:0] overwrite_counter;
 
+logic [4:0]  burstcount;
 logic [3:0]  offset;
 logic [4:0]  index;
 logic [20:0] tag; 
@@ -48,7 +47,6 @@ logic [4:0] cache_address;
 
 logic [31:0] mem_tag_valid [3:0];
 logic [31:0] new_tag_valid;
-logic transmission; 
 logic c_miss_start;
 logic c_miss_wait; 
 
@@ -127,8 +125,6 @@ end
 
 always_comb
 begin
-	transmission = (av_read || av_wait_data);
-	//tag_count = mem_tag_valid[0][23:22];
 	cache_hit = cache_hit_reg;
 	u_data_write = 3'd0;
 	reddata = 'bx;
@@ -143,30 +139,30 @@ begin
 		else if (mem_tag_valid[0][21] && mem_tag_valid[0][20:0] == old_tag) 
 		begin
 			cache_hit = 0;
-			wait_data = 0;//(index != old_index) ? 1 : 0;
+			wait_data = 0;
 			new_state = CACHE_HIT;
-			u_data_write = {1'b1, u_data[index][1] ,1'b1};
+			u_data_write = {1'b1, u_data[old_index][1] ,1'b1};
 		end
 		else if (mem_tag_valid[1][21] && mem_tag_valid[1][20:0] == old_tag) 
 		begin
 			cache_hit = 1;
-			wait_data = 0;//(index != old_index) ? 1 : 0;
+			wait_data = 0;
 			new_state = CACHE_HIT;
-			u_data_write = {1'b1, u_data[index][1] ,1'b0};
+			u_data_write = {1'b1, u_data[old_index][1] ,1'b0};
 		end
 		else if (mem_tag_valid[2][21] && mem_tag_valid[2][20:0] == old_tag) 
 		begin
 			cache_hit = 2;
-			wait_data = 0;//(index != old_index) ? 1 : 0;
+			wait_data = 0;
 			new_state = CACHE_HIT;
-			u_data_write = {1'b0, 1'b1, u_data[index][0]};
+			u_data_write = {1'b0, 1'b1, u_data[old_index][0]};
 		end
 		else if (mem_tag_valid[3][21] && mem_tag_valid[3][20:0] == old_tag) 
 		begin
 			cache_hit = 3;
-			wait_data = 0;//(index != old_index) ? 1 : 0;
+			wait_data = 0;
 			new_state = CACHE_HIT;
-			u_data_write = {1'b0, 1'b0, u_data[index][0]};
+			u_data_write = {1'b0, 1'b0, u_data[old_index][0]};
 		end
 		else 
 		begin
@@ -176,7 +172,6 @@ begin
 		end
 		
 		if(read)
-		//if(read && !c_miss_wait)
 		begin
 			case (old_offset)
 			4'd0:  reddata = cache_reddata[cache_hit][31:0];
@@ -237,6 +232,7 @@ begin
 		cache_tag_write[3] <= 0;
 		overwrite_counter  <= 0;
 		tag_count 			 <= 0;
+		burstcount			<= 0;
 		old_address			 <= address;
 	end
 	else
@@ -254,6 +250,7 @@ begin
 			cache_tag_write[2] <= 0;
 			cache_tag_write[3] <= 0;
 			c_miss_wait 		 <= 0;
+			burstcount		<= 0;
 			if(read)
 			begin
 				u_data[old_index] <= u_data_write;
@@ -267,26 +264,57 @@ begin
 			begin
 				av_read 		 <= 1;
 				c_miss_start <= 1;
+				if (!mem_tag_valid[0][21])
+					tag_count  <= 2'h0;
+				else if (!mem_tag_valid[1][21])
+					tag_count  <= 2'h1;
+				else if (!mem_tag_valid[2][21])
+					tag_count  <= 2'h2;
+				else if (!mem_tag_valid[3][21])
+					tag_count  <= 2'h3;
+				else
 				casex (u_data[old_index])
-				3'b0x0 : tag_count  <=0;
-				3'b0x1 : tag_count  <=1;
-				3'b10x : tag_count  <=2;
-				3'b11x : tag_count  <=3;
-				default : tag_count <=0;
+				3'b0x0 : tag_count  <= 2'h0;
+				3'b0x1 : tag_count  <= 2'h1;
+				3'b10x : tag_count  <= 2'h2;
+				3'b11x : tag_count  <= 2'h3;
+				default : tag_count <= 2'h0;
 				endcase
 			end
 			else
-			if (!transmission)
+			if (burstcount != I_BURST)
 			begin
-				cache_wrdata <= av_reddata;
+				av_read <= 0;
+				if (av_read_data_valid)
+				begin
+					case (burstcount)
+						4'd0:  cache_wrdata[31:0]		<= av_reddata;
+						4'd1:  cache_wrdata[63:32]		<= av_reddata;
+						4'd2:  cache_wrdata[95:64]		<= av_reddata;
+						4'd3:  cache_wrdata[127:96]		<= av_reddata;
+						4'd4:  cache_wrdata[159:128]	<= av_reddata;
+						4'd5:  cache_wrdata[191:160]	<= av_reddata;
+						4'd6:  cache_wrdata[223:192]	<= av_reddata;
+						4'd7:  cache_wrdata[255:224]	<= av_reddata;
+						4'd8:  cache_wrdata[287:256]	<= av_reddata;
+						4'd9:  cache_wrdata[319:288]	<= av_reddata;
+						4'd10: cache_wrdata[351:320]	<= av_reddata;
+						4'd11: cache_wrdata[383:352]	<= av_reddata;
+						4'd12: cache_wrdata[415:384]	<= av_reddata;
+						4'd13: cache_wrdata[447:416]	<= av_reddata;
+						4'd14: cache_wrdata[479:448]	<= av_reddata;
+						4'd15: cache_wrdata[511:480]	<= av_reddata; 
+						default: cache_wrdata <= 'bx;
+					endcase
+					burstcount <= burstcount + 1;
+				end
+			end
+			else
+			begin
 				cache_write[tag_count] <= 1;
 				c_miss_start <= 0;
 				if(mem_tag_valid[tag_count][21])
 					overwrite_counter = overwrite_counter + 1;
-			end
-			else
-			begin
-				av_read <= 0;
 			end
 		end
 		CACHE_WRITE:
